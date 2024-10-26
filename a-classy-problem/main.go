@@ -4,7 +4,6 @@ import (
 	"bufio"
 	"fmt"
 	"os"
-	"sort"
 	"strconv"
 	"strings"
 )
@@ -27,7 +26,7 @@ var people = [100]Person{}
 var input string
 
 func main() {
-	stdinReader := bufio.NewReader(os.Stdin)
+	stdinReader := bufio.NewReaderSize(os.Stdin, 4096*16)
 	outputBuilder := strings.Builder{}
 
 	input, _ = stdinReader.ReadString('\n')
@@ -77,10 +76,19 @@ func main() {
 			thisCasePeople[personIdx].Point += MissingMiddleAddingList[numberOfClasses] // add 1's to the missing digits
 		}
 
-		sort.Slice(thisCasePeople, func(i, j int) bool {
-			return thisCasePeople[i].Point > thisCasePeople[j].Point ||
-				(thisCasePeople[i].Point == thisCasePeople[j].Point && thisCasePeople[i].Name < thisCasePeople[j].Name)
+		QuickSort(thisCasePeople, func(a, b Person) bool {
+			return a.Point > b.Point ||
+				(a.Point == b.Point && a.Name < b.Name)
 		})
+
+		/*slices.SortFunc(thisCasePeople, func(a, b Person) int {
+			if a.Point > b.Point ||
+				(a.Point == b.Point && a.Name < b.Name) {
+				return -1
+			} else {
+				return 1
+			}
+		})*/
 
 		for personIdx := 0; personIdx < numberOfPeople; personIdx++ {
 			outputBuilder.WriteString(thisCasePeople[personIdx].Name)

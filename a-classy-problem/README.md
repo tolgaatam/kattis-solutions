@@ -1,1 +1,1 @@
-By the time of writing, this solution is the fastest solution using Go (with 0.05s runtime). There are faster solutions written in C/C++, Rust and Zig. Except these languages, this implementation is the fastest.
+By the time of writing, this solution is the fastest solution using Go (with 0.04s runtime). There are faster solutions written in C/C++, Rust and Zig. Except these languages, this implementation is the fastest.
