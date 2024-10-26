@@ -1,5 +1,9 @@
 package main
 
+// Kattis uses Go 1.20 and it does not have slices package.
+// sort.Slice is slow due to reflection usage, so I don't want to use it.
+// Hence, I rolled out my own quicksort impl, which yielded faster than sort.Slice, indeed.
+
 func partition[E any](arr []E, low int, high int, lessFunc func(a E, b E) bool) int {
 	pivot := arr[high]
 	i := low
