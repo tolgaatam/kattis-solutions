@@ -33,15 +33,9 @@ func main() {
 	input, _ = stdinReader.ReadString('\n')
 	numberOfCases, _ := strconv.Atoi(strings.TrimSpace(input))
 
-	// TODO: Remove debug print
-	fmt.Printf("Number of cases: %d\n", numberOfCases)
-
 	for caseIdx := 0; caseIdx < numberOfCases; caseIdx++ {
 		input, _ = stdinReader.ReadString('\n')
 		numberOfPeople, _ := strconv.Atoi(strings.TrimSpace(input))
-
-		// TODO: Remove debug print
-		fmt.Printf("Number of people in case %d: %d\n", caseIdx, numberOfPeople)
 
 		thisCasePeople := people[0:numberOfPeople]
 
@@ -65,16 +59,10 @@ func main() {
 
 			thisCasePeople[personIdx].Point = 0
 
-			// TODO: remove debug prints
-			fmt.Printf("Name: %s\nClasses-unif: %s\n", thisCasePeople[personIdx].Name, classesUnified)
-
 			classCursorPos = 0
 			numberOfClasses = 0
 			for classCursorPos < classesUnifiedLength {
 				currClass = classesUnified[classCursorPos : classCursorPos+1] // just get "l", "m" or "u"
-
-				// TODO: remove debug prints
-				fmt.Printf("%s", currClass)
 
 				comp = strings.Compare(currClass, "m")
 				thisCasePeople[personIdx].Point += (comp + 1) * PowersOf3[numberOfClasses] // add 0 for l, 1 for m, 2 for u to the number in base3
@@ -84,9 +72,6 @@ func main() {
 
 				numberOfClasses++
 			}
-
-			// TODO: remove debug prints
-			fmt.Println("\n")
 
 			thisCasePeople[personIdx].Point *= PowersOf3[10-numberOfClasses]            // shift by 10-numberOfClasses digits in base3
 			thisCasePeople[personIdx].Point += MissingMiddleAddingList[numberOfClasses] // add 1's to the missing digits
