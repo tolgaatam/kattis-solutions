@@ -1,8 +1,11 @@
 package main
 
 import (
+	"bufio"
 	"fmt"
+	"os"
 	"sort"
+	"strconv"
 	"strings"
 )
 
@@ -21,19 +24,21 @@ type Person struct {
 }
 
 var people = [100]Person{}
+var input string
 
 func main() {
-	var numberOfCases int
-	_, _ = fmt.Scanf("%d", &numberOfCases)
-
+	stdinReader := bufio.NewReader(os.Stdin)
 	outputBuilder := strings.Builder{}
+
+	input, _ = stdinReader.ReadString('\n')
+	numberOfCases, _ := strconv.Atoi(strings.TrimSpace(input))
 
 	// TODO: Remove debug print
 	fmt.Printf("Number of cases: %d\n", numberOfCases)
 
 	for caseIdx := 0; caseIdx < numberOfCases; caseIdx++ {
-		var numberOfPeople int
-		_, _ = fmt.Scanf("%d", &numberOfPeople)
+		input, _ = stdinReader.ReadString('\n')
+		numberOfPeople, _ := strconv.Atoi(strings.TrimSpace(input))
 
 		// TODO: Remove debug print
 		fmt.Printf("Number of people in case %d: %d\n", caseIdx, numberOfPeople)
@@ -45,21 +50,23 @@ func main() {
 			classesUnified       string
 			classesUnifiedLength int
 			classCursorPos       int
-			dummy                string
 			currClass            string
 			numberOfClasses      int
 			comp                 int
 			isNotMiddle          int
 		)
 		for personIdx := 0; personIdx < numberOfPeople; personIdx++ {
-			_, _ = fmt.Scanf("%s %s %s", &thisCasePeople[personIdx].Name, &classesUnified, &dummy)
+			input, _ = stdinReader.ReadString('\n')
+			lineParts := strings.Fields(input)
+
+			thisCasePeople[personIdx].Name = lineParts[0][0 : len(lineParts[0])-1]
+			classesUnified = lineParts[1]
 			classesUnifiedLength = len(classesUnified)
-			thisCasePeople[personIdx].Name = thisCasePeople[personIdx].Name[0 : len(thisCasePeople[personIdx].Name)-1]
 
 			thisCasePeople[personIdx].Point = 0
 
 			// TODO: remove debug prints
-			fmt.Printf("Name: %s\nClasses-unif: %s\nDummy: %s\n", thisCasePeople[personIdx].Name, classesUnified, dummy)
+			fmt.Printf("Name: %s\nClasses-unif: %s\n", thisCasePeople[personIdx].Name, classesUnified)
 
 			classCursorPos = 0
 			numberOfClasses = 0
