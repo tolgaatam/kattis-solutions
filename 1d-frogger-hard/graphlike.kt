@@ -20,6 +20,9 @@ fun main() {
 
     @OptIn(ExperimentalStdlibApi::class)
     for(s in 0 ..< n){
+        if(indexToCycleArray[s] != null || indexToPoleArray[s] != null){
+            continue
+        }
         var currIndex = s
         val indicesList = ArrayList<Int>()
         val indicesOrderMap = HashMap<Int, Int>()
@@ -44,14 +47,15 @@ fun main() {
             } else if(indexToPoleArray[currIndex] != null){ // currIndex already in a pole
                 val numberOfElementsBeforeMerge = indicesList.size
                 val existingPole = indexToPoleArray[currIndex]!!
-                for((order, index) in existingPole.indicesList.withIndex()){
+                val currIndexOrderInExistingPole = existingPole.indicesOrderMap[currIndex]!!
+                for(index in existingPole.indicesList.subList(currIndexOrderInExistingPole,existingPole.indicesList.size)){
+                    indicesOrderMap[index] = indicesList.size
                     indicesList.add(index)
-                    indicesOrderMap[index] = numberOfElementsBeforeMerge + order
                 }
 
                 val newPole = Pole(indicesList, indicesOrderMap, existingPole.finalCycle)
 
-                if(existingPole.indicesList[0] == currIndex){ // replace the whole pole if we found its head
+                if(currIndexOrderInExistingPole == 0){ // replace the whole pole if we found its head
                     for(elt in indicesList){
                         indexToPoleArray[elt] = newPole
                     }

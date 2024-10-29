@@ -31,8 +31,7 @@ fun main() {
                     continue
                 }
 
-                val writtenValue = board[currIndex]
-                val nextIndex = currIndex + n * (((writtenValue < 0).compareTo(false) * -2) + 1) - writtenValue
+                val nextIndex = currIndex + board[currIndex]
                 if(nextIndex < 0 || nextIndex >= n || memo[nextIndex] == false){
                     memo[currIndex] = false
                 } else if(memo[nextIndex] == true){

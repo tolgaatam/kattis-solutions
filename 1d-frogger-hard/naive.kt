@@ -51,8 +51,7 @@ fun main() {
                     break
                 } else { // keep looking
                     visitedIndices.add(currIndex)
-                    val writtenValue = board[currIndex]
-                    currIndex += n * (((writtenValue < 0).compareTo(false) * -2) + 1) - writtenValue
+                    currIndex += board[currIndex]
                 }
             }
         }
