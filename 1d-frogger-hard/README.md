@@ -1,3 +1,3 @@
-I decided to implement this in Kotlin as a challenge. I don't think that Java and Kotlin are best-suited for this kind of problems, and runtime statistics at Kattis proves so.
+I decided to implement this in Kotlin as a challenge. I don't think that Java and Kotlin are best-suited for this kind of problem, and runtime statistics at Kattis proves so.
 
-So far, I have attempted 3 different methods without success.
+`naive.kt` and `reverse.kt` is too slow to pass the tests. `graphlike.kt` passed the challenge with 1.16 seconds. Further optimizations might be possible.

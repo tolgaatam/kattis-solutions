@@ -6,8 +6,7 @@ import kotlin.collections.HashSet
 open class Ending(open val id: Int) {
     data class Cycle(
         override val id: Int,
-        val indicesSet: MutableSet<Int>,
-        val magicNumbersSet: MutableSet<Int>
+        val indicesList: List<Int>
     ): Ending(id)
 
     data class Void(
@@ -87,8 +86,7 @@ fun main() {
                 val cycleIndicesList = indicesList.subList(cycleFormingStartsAt, indicesList.size)
                 val newCycle = Ending.Cycle(
                     endingList.size,
-                    HashSet(cycleIndicesList),
-                    HashSet(cycleIndicesList.map { board[it] })
+                    cycleIndicesList,
                 )
                 endingList.add(newCycle)
 
@@ -116,27 +114,32 @@ fun main() {
     @OptIn(ExperimentalStdlibApi::class)
     for(ending in endingList){
 
-        fun dfs(s: Int, magicNumbersSet: MutableSet<Int>, shouldCopyMagicNumbersSet: Boolean){
-            var setToUse = magicNumbersSet
-            if(shouldCopyMagicNumbersSet){
-                setToUse = HashSet(magicNumbersSet)
+        fun dfs(s: Int, magicNumbersSet: MutableSet<Int>, shouldLeaveMagicNumbersSetUnchanged: Boolean){
+            val doesMagicNumberSetHasThisValAlready = board[s] in magicNumbersSet
+            if(!doesMagicNumberSetHasThisValAlready){
+                magicNumbersSet.add(board[s])
             }
 
-            setToUse.add(board[s])
-            numberOfWinningOutcomes += setToUse.size.toLong()
+            numberOfWinningOutcomes += magicNumbersSet.size.toLong()
 
             for((i, prevS) in reverseGraph[s].withIndex()){
-                dfs(prevS, setToUse, i < reverseGraph[s].size-1)
+                dfs(prevS, magicNumbersSet, shouldLeaveMagicNumbersSetUnchanged || i < reverseGraph[s].size-1)
+            }
+            if(shouldLeaveMagicNumbersSetUnchanged && !doesMagicNumberSetHasThisValAlready){
+                magicNumbersSet.remove(board[s])
             }
         }
 
         when(ending){
             is Ending.Cycle -> {
-                numberOfWinningOutcomes += ending.indicesSet.size.toLong() * ending.magicNumbersSet.size.toLong()
+                val cycleMagicNumberSet = HashSet(ending.indicesList.map { board[it] })
+                val indicesSet = HashSet(ending.indicesList)
 
-                for(s in ending.indicesSet){
-                    for(prevS in reverseGraph[s].filter{it !in ending.indicesSet}){
-                        dfs(prevS, ending.magicNumbersSet, true)
+                numberOfWinningOutcomes += ending.indicesList.size.toLong() * cycleMagicNumberSet.size.toLong()
+
+                for(s in ending.indicesList){
+                    for(prevS in reverseGraph[s].filter{it !in indicesSet}){
+                        dfs(prevS, cycleMagicNumberSet, true)
                     }
                 }
             }
