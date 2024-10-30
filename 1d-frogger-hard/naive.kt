@@ -7,7 +7,7 @@ fun main() {
     val possibleMagicNumbers = board.toSet() // creates a LinkedHashSet, which is faster for readonly sets like this
     val memo = arrayOfNulls<Boolean?>(n)
 
-    var numberOfWinningOutcomes = 0
+    var numberOfWinningOutcomes: Long = 0
 
     for (magicNumber in possibleMagicNumbers){
         fill(memo, null)
@@ -38,7 +38,7 @@ fun main() {
                     }
                     break
                 } else if (memo[currIndex] == true){ // known-to-succeed or currently discovered success
-                    numberOfWinningOutcomes += visitedIndices.size
+                    numberOfWinningOutcomes += visitedIndices.size.toLong()
                     for(visitedIndex in visitedIndices){
                         memo[visitedIndex] = true
                     }

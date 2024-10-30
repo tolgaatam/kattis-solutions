@@ -22,7 +22,7 @@ fun main() {
         }
     }
 
-    var numberOfWinningOutcomes = 0
+    var numberOfWinningOutcomes: Long = 0
 
     for (magicNumber in possibleMagicNumbers.keys){
         val winningIndices = HashSet<Int>()
@@ -53,7 +53,7 @@ fun main() {
             }
         }
 
-        numberOfWinningOutcomes += winningIndices.size
+        numberOfWinningOutcomes += winningIndices.size.toLong()
     }
 
     println(numberOfWinningOutcomes)

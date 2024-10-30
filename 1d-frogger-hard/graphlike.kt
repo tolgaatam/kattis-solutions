@@ -24,7 +24,7 @@ fun main() {
     val n = readln().toInt()
     val board = readln().split(" ").map { it.toInt() }
 
-    var numberOfWinningOutcomes = 0
+    var numberOfWinningOutcomes: Long = 0
 
     val reverseGraph = Array<MutableList<Int>>(n){ LinkedList() } // shows incoming edges
     @OptIn(ExperimentalStdlibApi::class)
@@ -123,7 +123,7 @@ fun main() {
             }
 
             setToUse.add(board[s])
-            numberOfWinningOutcomes += setToUse.size
+            numberOfWinningOutcomes += setToUse.size.toLong()
 
             for((i, prevS) in reverseGraph[s].withIndex()){
                 dfs(prevS, setToUse, i < reverseGraph[s].size-1)
@@ -132,7 +132,7 @@ fun main() {
 
         when(ending){
             is Ending.Cycle -> {
-                numberOfWinningOutcomes += ending.indicesSet.size * ending.magicNumbersSet.size
+                numberOfWinningOutcomes += ending.indicesSet.size.toLong() * ending.magicNumbersSet.size.toLong()
 
                 for(s in ending.indicesSet){
                     for(prevS in reverseGraph[s].filter{it !in ending.indicesSet}){
