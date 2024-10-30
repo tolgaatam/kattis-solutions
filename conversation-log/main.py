@@ -1,39 +1,28 @@
+from collections import defaultdict, Counter
+
 n = int(input())
-word_total_count_map = {}
-word_unique_user_count_map = {}
-user_wordset_map = {}
+word_total_count_map = defaultdict(int)
+word_unique_user_count_map = defaultdict(int)
+user_word_corpus_map = defaultdict(str)
 
-for user_idx in range(n):
-	line_elements = input().split(" ")
-	username = line_elements[0]
-	wordlist = line_elements[1:]
+for _ in range(n):
+	[username, rest] = input().split(" ", 1) 
+	user_word_corpus_map[username] += " " + rest
 
-	if username in user_wordset_map:
-		wordset = user_wordset_map[username]
-	else:
-		wordset = set()
-		user_wordset_map[username] = wordset
+for username, word_corpus in user_word_corpus_map.items():
+	word_list = word_corpus[1:].split(" ")
+	word_counts = Counter(word_list)
+	for word, count in word_counts.items():
+		word_unique_user_count_map[word] += 1
+		word_total_count_map[word] += count
 
-	for word in wordlist:
-		word_seen_before = False
-		if word in word_total_count_map:
-			word_seen_before = True
-			word_total_count_map[word] += 1
-		else:
-			word_total_count_map[word] = 1
+user_count = len(user_word_corpus_map)
+winning_words = [word for word, words_unique_user_count in word_unique_user_count_map.items() if words_unique_user_count == user_count]
+winning_words.sort(key=lambda word: (-1*word_total_count_map[word] , word))
 
-		if word not in wordset:
-			wordset.add(word)
-			if word_seen_before:
-				word_unique_user_count_map[word] += 1
-			else:
-				word_unique_user_count_map[word] = 1
+str_to_print = "\n".join(winning_words)
 
-user_count = len(user_wordset_map)
-winning_words = sorted([(-1*word_total_count_map[k] , k) for k,v in word_unique_user_count_map.items() if v == user_count])
-
-if len(winning_words) == 0:
+if len(str_to_print) == 0:
 	print("ALL CLEAR")
 else:
-	for word in winning_words:
-		print(word[1])
+	print(str_to_print)

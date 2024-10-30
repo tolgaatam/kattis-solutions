@@ -1,1 +1,1 @@
-Current implementation in Python is accepted with 0.21s time. There are better timings with Python, so I should keep working on the performance.
+Current implementation is in Top 10 Python implementations with 0.16s runtime. There is still room in performance improvement.
