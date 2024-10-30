@@ -1,12 +1,23 @@
-data class Cycle(
-    val indicesSet: Set<Int>,
-    val magicNumbersSet: Set<Int>
-)
+import java.util.LinkedList
+import kotlin.collections.ArrayList
+import kotlin.collections.HashMap
+import kotlin.collections.HashSet
+
+open class Ending(open val id: Int) {
+    data class Cycle(
+        override val id: Int,
+        val indicesSet: MutableSet<Int>,
+        val magicNumbersSet: MutableSet<Int>
+    ): Ending(id)
+
+    data class Void(
+        override val id: Int,
+        val prevIndex: Int
+    ): Ending(id)
+}
 
 data class Pole(
-    val indicesList: List<Int>,
-    val indicesOrderMap: Map<Int, Int>,
-    val finalCycle: Cycle?
+    val ending: Ending
 )
 
 fun main() {
@@ -15,12 +26,24 @@ fun main() {
 
     var numberOfWinningOutcomes = 0
 
-    val indexToCycleArray = Array<Cycle?>(n){null}
+    val reverseGraph = Array<MutableList<Int>>(n){ LinkedList() } // shows incoming edges
+    @OptIn(ExperimentalStdlibApi::class)
+    for (s in 0 ..< n){
+        val sNext = s + board[s]
+        @OptIn(ExperimentalStdlibApi::class)
+        if(sNext in 0..< n){
+            reverseGraph[sNext].add(s)
+        }
+    }
+
+    val indexToCycleArray = Array<Ending.Cycle?>(n){null}
     val indexToPoleArray = Array<Pole?>(n){null}
+
+    val endingList = ArrayList<Ending>()
 
     @OptIn(ExperimentalStdlibApi::class)
     for(s in 0 ..< n){
-        if(indexToCycleArray[s] != null || indexToPoleArray[s] != null){
+        if(indexToPoleArray[s] != null || indexToCycleArray[s] != null){
             continue
         }
         var currIndex = s
@@ -31,47 +54,44 @@ fun main() {
         indicesList.add(s)
 
         while(true){
-            currIndex = currIndex + board[currIndex]
-            if(currIndex < 0 || currIndex >= n){ // Dead cycle (dead-end)
-                val newPole = Pole(indicesList, indicesOrderMap, null)
+            currIndex += board[currIndex]
+            @OptIn(ExperimentalStdlibApi::class)
+            if(currIndex !in 0 ..< n){ // Dead cycle (dead-end)
+                val voidEnding = Ending.Void(endingList.size, indicesList.last())
+                endingList.add(voidEnding)
+
+                val newPole = Pole(voidEnding)
                 for(elt in indicesList){
                     indexToPoleArray[elt] = newPole
                 }
+
                 break
             } else if(indexToCycleArray[currIndex] != null){ // currIndex already in a cycle
-                val newPole = Pole(indicesList, indicesOrderMap, indexToCycleArray[currIndex])
+                val newPole = Pole(indexToCycleArray[currIndex]!!)
                 for(elt in indicesList){
                     indexToPoleArray[elt] = newPole
                 }
+
                 break
             } else if(indexToPoleArray[currIndex] != null){ // currIndex already in a pole
-                val numberOfElementsBeforeMerge = indicesList.size
                 val existingPole = indexToPoleArray[currIndex]!!
-                val currIndexOrderInExistingPole = existingPole.indicesOrderMap[currIndex]!!
-                for(index in existingPole.indicesList.subList(currIndexOrderInExistingPole,existingPole.indicesList.size)){
-                    indicesOrderMap[index] = indicesList.size
-                    indicesList.add(index)
+
+                val newPole = Pole(existingPole.ending)
+                for(elt in indicesList){
+                    indexToPoleArray[elt] = newPole
                 }
 
-                val newPole = Pole(indicesList, indicesOrderMap, existingPole.finalCycle)
-
-                if(currIndexOrderInExistingPole == 0){ // replace the whole pole if we found its head
-                    for(elt in indicesList){
-                        indexToPoleArray[elt] = newPole
-                    }
-                } else { // create a new long pole without disturbing the existing one
-                    for(elt in indicesList.subList(0, numberOfElementsBeforeMerge)){
-                        indexToPoleArray[elt] = newPole
-                    }
-                }
                 break
             } else if (indicesOrderMap.containsKey(currIndex)){ // new cycle forming
                 val cycleFormingStartsAt = indicesOrderMap[currIndex]!!
                 val cycleIndicesList = indicesList.subList(cycleFormingStartsAt, indicesList.size)
-                val newCycle = Cycle(
+                val newCycle = Ending.Cycle(
+                    endingList.size,
                     HashSet(cycleIndicesList),
                     HashSet(cycleIndicesList.map { board[it] })
                 )
+                endingList.add(newCycle)
+
                 for(elt in cycleIndicesList){
                     indexToCycleArray[elt] = newCycle
                 }
@@ -79,8 +99,6 @@ fun main() {
                 if(cycleFormingStartsAt > 0){ // there is also a pole to generate
                     val poleIndicesList = indicesList.subList(0, cycleFormingStartsAt)
                     val newPole = Pole(
-                        poleIndicesList,
-                        indicesOrderMap.filterValues { it < cycleFormingStartsAt },
                         newCycle
                     )
                     for(elt in poleIndicesList){
@@ -95,26 +113,39 @@ fun main() {
         }
     }
 
-    // Collect results now
-
     @OptIn(ExperimentalStdlibApi::class)
-    for(s in 0 ..< n){
-        if(indexToCycleArray[s] != null){
-            numberOfWinningOutcomes += indexToCycleArray[s]!!.magicNumbersSet.size
-        } else { // Pole
-            val magicNumbersReachable = HashSet<Int>()
-            val pole = indexToPoleArray[s]!!
-            val startingOrderInPole = pole.indicesOrderMap[s]!!
+    for(ending in endingList){
 
-            @OptIn(ExperimentalStdlibApi::class)
-            for(i in startingOrderInPole ..< pole.indicesList.size){
-                magicNumbersReachable.add(board[pole.indicesList[i]])
-            }
-            if(pole.finalCycle != null){
-                magicNumbersReachable.addAll(pole.finalCycle.magicNumbersSet)
+        fun dfs(s: Int, magicNumbersSet: MutableSet<Int>, shouldCopyMagicNumbersSet: Boolean){
+            var setToUse = magicNumbersSet
+            if(shouldCopyMagicNumbersSet){
+                setToUse = HashSet(magicNumbersSet)
             }
 
-            numberOfWinningOutcomes += magicNumbersReachable.size
+            setToUse.add(board[s])
+            numberOfWinningOutcomes += setToUse.size
+
+            for((i, prevS) in reverseGraph[s].withIndex()){
+                dfs(prevS, setToUse, i < reverseGraph[s].size-1)
+            }
+        }
+
+        when(ending){
+            is Ending.Cycle -> {
+                numberOfWinningOutcomes += ending.indicesSet.size * ending.magicNumbersSet.size
+
+                for(s in ending.indicesSet){
+                    for(prevS in reverseGraph[s].filter{it !in ending.indicesSet}){
+                        dfs(prevS, ending.magicNumbersSet, true)
+                    }
+                }
+            }
+            is Ending.Void -> { // Void
+                dfs(ending.prevIndex, HashSet(), false)
+            }
+            else -> {
+                throw RuntimeException("Endings cannot be initialized without its derived types")
+            }
         }
     }
 
