@@ -26,7 +26,7 @@ fun main() {
 
     var numberOfWinningOutcomes: Long = 0
 
-    val reverseGraph = Array<MutableList<Int>>(n){ LinkedList() } // shows incoming edges
+    val reverseGraph = Array<MutableList<Int>>(n){ ArrayList() } // shows incoming edges
     @OptIn(ExperimentalStdlibApi::class)
     for (s in 0 ..< n){
         val sNext = s + board[s]
