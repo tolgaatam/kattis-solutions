@@ -20,8 +20,9 @@ data class Pole(
 )
 
 fun main() {
-    val n = readln().toInt()
-    val board = readln().split(" ").map { it.toInt() }
+    val reader = System.`in`.bufferedReader()
+    val n = reader.readLine().toInt()
+    val board = reader.readLine().split(" ").map { it.toInt() }
 
     var numberOfWinningOutcomes: Long = 0
 
