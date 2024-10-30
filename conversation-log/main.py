@@ -20,9 +20,8 @@ user_count = len(user_word_corpus_map)
 winning_words = [word for word, words_unique_user_count in word_unique_user_count_map.items() if words_unique_user_count == user_count]
 winning_words.sort(key=lambda word: (-1*word_total_count_map[word] , word))
 
-str_to_print = "\n".join(winning_words)
-
-if len(str_to_print) == 0:
-	print("ALL CLEAR")
+if len(winning_words) > 0:
+	print("\n".join(winning_words))
 else:
-	print(str_to_print)
+	print("ALL CLEAR")
+	
