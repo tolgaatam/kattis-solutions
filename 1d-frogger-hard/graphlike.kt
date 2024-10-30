@@ -114,18 +114,22 @@ fun main() {
     @OptIn(ExperimentalStdlibApi::class)
     for(ending in endingList){
 
-        fun dfs(s: Int, magicNumbersSet: MutableSet<Int>, shouldLeaveMagicNumbersSetUnchanged: Boolean){
+        fun dfs(s: Int, magicNumbersSet: MutableSet<Int>){
             val doesMagicNumberSetHasThisValAlready = board[s] in magicNumbersSet
-            if(!doesMagicNumberSetHasThisValAlready){
+            if(doesMagicNumberSetHasThisValAlready){
+                numberOfWinningOutcomes += magicNumbersSet.size.toLong()
+
+                for(prevS in reverseGraph[s]){
+                    dfs(prevS, magicNumbersSet)
+                }
+            } else {
                 magicNumbersSet.add(board[s])
-            }
+                numberOfWinningOutcomes += magicNumbersSet.size.toLong()
 
-            numberOfWinningOutcomes += magicNumbersSet.size.toLong()
+                for(prevS in reverseGraph[s]){
+                    dfs(prevS, magicNumbersSet)
+                }
 
-            for((i, prevS) in reverseGraph[s].withIndex()){
-                dfs(prevS, magicNumbersSet, shouldLeaveMagicNumbersSetUnchanged || i < reverseGraph[s].size-1)
-            }
-            if(shouldLeaveMagicNumbersSetUnchanged && !doesMagicNumberSetHasThisValAlready){
                 magicNumbersSet.remove(board[s])
             }
         }
@@ -139,12 +143,12 @@ fun main() {
 
                 for(s in ending.indicesList){
                     for(prevS in reverseGraph[s].filter{it !in indicesSet}){
-                        dfs(prevS, cycleMagicNumberSet, true)
+                        dfs(prevS, cycleMagicNumberSet)
                     }
                 }
             }
             is Ending.Void -> { // Void
-                dfs(ending.prevIndex, HashSet(), false)
+                dfs(ending.prevIndex, HashSet())
             }
             else -> {
                 throw RuntimeException("Endings cannot be initialized without its derived types")
