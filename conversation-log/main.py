@@ -4,7 +4,7 @@ word_unique_user_count_map = {}
 user_wordset_map = {}
 
 for user_idx in range(n):
-	line_elements = input().split()
+	line_elements = input().split(" ")
 	username = line_elements[0]
 	wordlist = line_elements[1:]
 
