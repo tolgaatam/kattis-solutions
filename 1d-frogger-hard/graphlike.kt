@@ -111,25 +111,17 @@ fun main() {
         }
     }
 
-    @OptIn(ExperimentalStdlibApi::class)
     for(ending in endingList){
 
         fun dfs(s: Int, magicNumbersSet: MutableSet<Int>){
-            val doesMagicNumberSetHasThisValAlready = board[s] in magicNumbersSet
-            if(doesMagicNumberSetHasThisValAlready){
-                numberOfWinningOutcomes += magicNumbersSet.size.toLong()
+            val isNewMagicNumberAdded = magicNumbersSet.add(board[s])
+            numberOfWinningOutcomes += magicNumbersSet.size.toLong()
 
-                for(prevS in reverseGraph[s]){
-                    dfs(prevS, magicNumbersSet)
-                }
-            } else {
-                magicNumbersSet.add(board[s])
-                numberOfWinningOutcomes += magicNumbersSet.size.toLong()
+            for(prevS in reverseGraph[s]){
+                dfs(prevS, magicNumbersSet)
+            }
 
-                for(prevS in reverseGraph[s]){
-                    dfs(prevS, magicNumbersSet)
-                }
-
+            if(isNewMagicNumberAdded){
                 magicNumbersSet.remove(board[s])
             }
         }
