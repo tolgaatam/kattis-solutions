@@ -45,10 +45,10 @@ int main() {
     }
 
     auto q = MyQueue(maxNodes);
-    unsigned char visited[maxNodes];
-    memset(&visited, 0, sizeof(unsigned char) * maxNodes);
+    bool visited[maxNodes];
+    //memset(&visited, 0, sizeof(unsigned char) * maxNodes);
     for(unsigned int i = 0; i < n; i++) {
-        visited[otherCharacters[i]] = 1;
+        visited[otherCharacters[i]] = true;
         q.enqueue(otherCharacters[i]);
     }
     unsigned int globalBestCharacter = otherCharacters[n-1];
@@ -58,8 +58,8 @@ int main() {
 
         for(unsigned int i = 1; i < maxNodes; i <<= 1) {
             const auto nextCh = ch ^ i;
-            if(visited[nextCh] == 0) {
-                visited[nextCh] = 1;
+            if(!visited[nextCh]) {
+                visited[nextCh] = true;
                 q.enqueue(nextCh);
                 globalBestCharacter = nextCh;
             }
