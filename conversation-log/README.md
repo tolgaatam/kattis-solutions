@@ -1,1 +1,3 @@
 Current implementation is in Top 10 Python implementations with 0.16s runtime. There is still room for performance improvement.
+
+I also made a Kotlin implementation out of curiosity. It scored 0.71s runtime. This runtime is actually the second best among Kotlin implementations. I can't wrap my head around of how bad Kotlin results are (even though my Kotlin and Python codes are the same, Python is waay faster). It must have something to do with the Kotlin version Kattis uses.
