@@ -18,7 +18,6 @@ using namespace std;
 #define ROW_OF_SEWED(s) ((s) >> 10)
 #define COL_OF_SEWED(s) ((s) & 0x3ff)
 
-
 int main() {
     int rows, cols;
     cin >> rows >> cols;
@@ -49,15 +48,18 @@ int main() {
         matrixGroups[ACC(i, cols+1)] = BOUNDARY_GROUP;
     }
 
-    // process the matrix and find out connected components
     queue<int> q;
     unsigned int currGroupId = 0;
-    for(int startR = 1; startR <= rows; ++startR) {
-        for(int startC = 1; startC <= cols; ++startC) {
-            if(matrixGroups[ACC(startR, startC)] != GROUP_NOT_SET) {
-                continue;
-            }
 
+    int numberOfQueries;
+    cin >> numberOfQueries;
+
+    int startR, startC, endR, endC;
+    for (int i = 0; i < numberOfQueries; ++i) {
+        cin >> startR >> startC >> endR >> endC;
+
+        if(matrixGroups[ACC(startR, startC)] == GROUP_NOT_SET && matrixGroups[ACC(endR, endC)] == GROUP_NOT_SET) {
+            // process the matrix and find out connected components lazily
             matrixGroups[ACC(startR, startC)] = ++currGroupId;
             const unsigned char currGroupPersonType = matrix[ACC(startR, startC)];
             q.push(SEW(startR, startC));
@@ -85,17 +87,9 @@ int main() {
                 }
             }
         }
-    }
 
-    int numberOfQueries;
-    cin >> numberOfQueries;
-
-    int row1, col1, row2, col2;
-    for (int i = 0; i < numberOfQueries; ++i) {
-        cin >> row1 >> col1 >> row2 >> col2;
-
-        if(matrixGroups[ACC(row1, col1)] == matrixGroups[ACC(row2, col2)]) {
-            if(matrix[ACC(row1, col1)] == BINARY) {
+        if(matrixGroups[ACC(startR, startC)] == matrixGroups[ACC(endR, endC)]) {
+            if(matrix[ACC(startR, startC)] == BINARY) {
                 cout << "binary" << endl;
             } else {
                 cout << "decimal" << endl;
