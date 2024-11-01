@@ -1,0 +1,1 @@
+This solution solves the problem in 0.02 seconds. As there are a lot of 0.01second solutions, I do not show up in the leaderboard yet. Target is 0.01 seconds!

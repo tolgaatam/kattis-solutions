@@ -1,0 +1,55 @@
+# Compiled Object files
+*.o
+*.obj
+
+# Compiled Static libraries
+*.a
+*.lib
+
+# Compiled Dynamic libraries
+*.so
+*.dylib
+*.dll
+
+# Executable files
+*.exe
+*.out
+*.app
+
+# Debug files
+*.dSYM/
+*.stackdump
+
+# CMake generated files
+CMakeFiles/
+CMakeCache.txt
+cmake_install.cmake
+Makefile
+CMakeLists.txt.user
+cmake-build-debug/
+
+# Build directories
+/build/
+/bin/
+/out/
+/Debug/
+/Release/
+
+# IDE settings
+## JetBrains
+.idea/
+## VS Code
+.vscode/
+## Eclipse
+.cproject
+.project
+.settings/
+
+# macOS
+.DS_Store
+
+# System files
+Thumbs.db
+Desktop.ini
+
+
