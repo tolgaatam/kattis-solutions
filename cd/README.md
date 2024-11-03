@@ -1,0 +1,1 @@
+Making this fast in Python started to seem impossible. So I made it top 4 shortest solution :) Code is read bad but it made the list!!
