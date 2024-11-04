@@ -1,0 +1,1 @@
+Pretty easy problem. I tied the best formance in Python with 0.04seconds and shortest implementation in Python with 53 characters only.
