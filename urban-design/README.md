@@ -1,0 +1,1 @@
+Shortest implementation of the problem ever. Readability suffers, however this is how you can achieve this record. Performance-wise, just meh..

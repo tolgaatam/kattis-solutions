@@ -1,0 +1,54 @@
+# Python specific
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+*.egg
+*.egg-info/
+dist/
+build/
+*.egg-info
+pip-log.txt
+pip-delete-this-directory.txt
+.env/
+.venv/
+env/
+venv/
+ENV/
+.ipynb_checkpoints
+.pytest_cache/
+.mypy_cache/
+.dmypy.json
+dmypy.json
+.pyre/
+htmlcov/
+.coverage
+.tox/
+.nox/
+
+# Kotlin specific
+*.class
+*.kotlin_module
+*.klib
+.gradle/
+build/
+out/
+
+# Gradle Wrapper
+!gradle/wrapper/gradle-wrapper.jar
+gradle/wrapper/gradle-wrapper.properties
+
+# IDE settings
+## JetBrains
+.idea/
+*.iml
+## VS Code
+.vscode/
+
+# macOS
+.DS_Store
+
+# System files
+Thumbs.db
+Desktop.ini
+*.swp
