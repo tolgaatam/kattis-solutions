@@ -2,6 +2,7 @@ package main
 
 import (
 	"bufio"
+	"bytes"
 	"fmt"
 	"os"
 	"strconv"
@@ -86,22 +87,28 @@ type BoggleCell struct {
 
 // CString is array of bytes to store iterated words efficiently
 type CString struct {
-	byteArray [8]byte
-	currLen   int
+	bytes []byte
 }
 
 func (c *CString) String() string {
-	return string(c.byteArray[0:c.currLen])
+	return string(c.bytes)
+}
+func (c *CString) Bytes() []byte {
+	return c.bytes
 }
 func (c *CString) Len() int {
-	return c.currLen
+	return len(c.bytes)
 }
 func (c *CString) AddCharacter(char byte) {
-	c.byteArray[c.currLen] = char
-	c.currLen += 1
+	c.bytes = append(c.bytes, char)
 }
 func (c *CString) RemoveLastCharacter() {
-	c.currLen -= 1
+	c.bytes = c.bytes[0 : len(c.bytes)-1]
+}
+func (c *CString) Copy() *CString {
+	bytesCopy := make([]byte, len(c.bytes))
+	copy(bytesCopy, c.bytes)
+	return &CString{bytesCopy}
 }
 
 var headTrieNode = TrieNode{}
@@ -145,15 +152,15 @@ func main() {
 	for ; caseNumber <= numberOfCases; caseNumber++ {
 		var score int
 		var numberOfFoundWords int
-		var bestWord string
+		var bestWord CString
 		var bestWordLength int
-		updateBestWord := func(word string) {
-			wordLength := len(word)
+		updateBestWord := func(word CString) {
+			wordLength := word.Len()
 			if wordLength > bestWordLength {
-				bestWord = word
+				bestWord = *word.Copy()
 				bestWordLength = wordLength
-			} else if wordLength == bestWordLength && word < bestWord {
-				bestWord = word
+			} else if wordLength == bestWordLength && bytes.Compare(word.Bytes(), bestWord.Bytes()) == -1 {
+				bestWord = *word.Copy()
 			}
 		}
 
@@ -219,7 +226,7 @@ func main() {
 			if myDictionaryNode.IsAWordUndiscoveredInThisCase(caseNumber) {
 				myDictionaryNode.MarkWordFoundInThisCase(caseNumber)
 				numberOfFoundWords++
-				switch currWord.currLen {
+				switch currWord.Len() {
 				case 3, 4:
 					score += 1
 				case 5:
@@ -231,7 +238,7 @@ func main() {
 				case 8:
 					score += 11
 				}
-				updateBestWord(currWord.String())
+				updateBestWord(currWord)
 			}
 
 			for n := 0; n < len(cell.Neighbors); n++ {
@@ -248,7 +255,7 @@ func main() {
 			}
 		}
 
-		outputBuilder.WriteString(fmt.Sprintf("%d %s %d\n", score, bestWord, numberOfFoundWords))
+		outputBuilder.WriteString(fmt.Sprintf("%d %s %d\n", score, bestWord.String(), numberOfFoundWords))
 
 		if caseNumber < numberOfCases {
 			readline()
