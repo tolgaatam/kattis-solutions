@@ -213,11 +213,6 @@ func main() {
 				return
 			}
 
-			// removed this check, because dictionary trie cannot go more than 8 levels anyway
-			/*if currWord.Len() == 8 {
-				return
-			}*/
-
 			visited[cell.Row][cell.Column] = true
 			defer func() { visited[cell.Row][cell.Column] = false }()
 
