@@ -214,10 +214,7 @@ func main() {
 			}
 
 			visited[cell.Row][cell.Column] = true
-			defer func() { visited[cell.Row][cell.Column] = false }()
-
 			currWord.AddCharacter(cell.Character)
-			defer func() { currWord.RemoveLastCharacter() }()
 
 			if myDictionaryNode.IsAWordUndiscoveredInThisCase(caseNumber) {
 				myDictionaryNode.MarkWordFoundInThisCase(caseNumber)
@@ -240,6 +237,9 @@ func main() {
 			for n := 0; n < len(cell.Neighbors); n++ {
 				dfs(cell.Neighbors[n], myDictionaryNode)
 			}
+
+			visited[cell.Row][cell.Column] = false
+			currWord.RemoveLastCharacter()
 		}
 
 		for i := 0; i < 4; i++ {
