@@ -113,7 +113,7 @@ func (c *CString) Copy() *CString {
 
 var headTrieNode = TrieNode{}
 
-func addWordToDictionary(word string) {
+func addWordToDictionary(word []byte) {
 	currNode := &headTrieNode
 	wordLength := len(word)
 
@@ -125,11 +125,11 @@ func addWordToDictionary(word string) {
 	currNode.MarkWord()
 }
 
-var stdinReader = bufio.NewReaderSize(os.Stdin, 4096*16)
+var stdinReader = bufio.NewReaderSize(os.Stdin, 4096)
 
-func readline() string {
-	line, _ := stdinReader.ReadString('\n')
-	return strings.TrimSpace(line)
+func readline() []byte {
+	b, _, _ := stdinReader.ReadLine()
+	return b
 }
 func asciiToUint8(str string) uint8 {
 	val, _ := strconv.Atoi(str)
@@ -138,7 +138,7 @@ func asciiToUint8(str string) uint8 {
 
 func main() {
 	outputBuilder := strings.Builder{}
-	numberOfWords, _ := strconv.Atoi(readline())
+	numberOfWords, _ := strconv.Atoi(string(readline()))
 
 	for wordIdx := 0; wordIdx < numberOfWords; wordIdx++ {
 		addWordToDictionary(readline())
@@ -146,7 +146,7 @@ func main() {
 
 	readline()
 
-	numberOfCases := asciiToUint8(readline())
+	numberOfCases := asciiToUint8(string(readline()))
 
 	var caseNumber uint8 = 1
 	for ; caseNumber <= numberOfCases; caseNumber++ {
@@ -241,8 +241,10 @@ func main() {
 				updateBestWord(currWord)
 			}
 
-			for n := 0; n < len(cell.Neighbors); n++ {
-				dfs(cell.Neighbors[n], myDictionaryNode)
+			if myDictionaryNode.IsPrefixOfAWord() {
+				for n := 0; n < len(cell.Neighbors); n++ {
+					dfs(cell.Neighbors[n], myDictionaryNode)
+				}
 			}
 
 			visited[cell.Row][cell.Column] = false
