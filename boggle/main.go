@@ -172,36 +172,43 @@ func main() {
 					Row:       i,
 					Column:    j,
 					Character: line[j],
+					Neighbors: make([]*BoggleCell, 0, 8),
 				}
 			}
 		}
 
+		// these switch statements came out a bit ugly, but I made this for the sake of performance..
 		for i := 0; i < 4; i++ {
 			for j := 0; j < 4; j++ {
 				cell := &board[i][j]
-				if i > 0 {
-					cell.Neighbors = append(cell.Neighbors, &board[i-1][j])
-					if j > 0 {
-						cell.Neighbors = append(cell.Neighbors, &board[i-1][j-1])
+				switch i {
+				case 0:
+					switch j {
+					case 0:
+						cell.Neighbors = append(cell.Neighbors, &board[i][j+1], &board[i+1][j+1], &board[i+1][j])
+					case 1, 2:
+						cell.Neighbors = append(cell.Neighbors, &board[i][j+1], &board[i+1][j+1], &board[i+1][j], &board[i+1][j-1], &board[i][j-1])
+					case 3:
+						cell.Neighbors = append(cell.Neighbors, &board[i+1][j], &board[i+1][j-1], &board[i][j-1])
 					}
-					if j < 3 {
-						cell.Neighbors = append(cell.Neighbors, &board[i-1][j+1])
+				case 1, 2:
+					switch j {
+					case 0:
+						cell.Neighbors = append(cell.Neighbors, &board[i-1][j], &board[i-1][j+1], &board[i][j+1], &board[i+1][j+1], &board[i+1][j])
+					case 1, 2:
+						cell.Neighbors = append(cell.Neighbors, &board[i-1][j-1], &board[i-1][j], &board[i-1][j+1], &board[i][j-1], &board[i][j+1], &board[i+1][j-1], &board[i+1][j], &board[i+1][j+1])
+					case 3:
+						cell.Neighbors = append(cell.Neighbors, &board[i-1][j], &board[i-1][j-1], &board[i][j-1], &board[i+1][j-1], &board[i+1][j])
 					}
-				}
-				if i < 3 {
-					cell.Neighbors = append(cell.Neighbors, &board[i+1][j])
-					if j > 0 {
-						cell.Neighbors = append(cell.Neighbors, &board[i+1][j-1])
+				case 3:
+					switch j {
+					case 0:
+						cell.Neighbors = append(cell.Neighbors, &board[i][j+1], &board[i-1][j+1], &board[i-1][j])
+					case 1, 2:
+						cell.Neighbors = append(cell.Neighbors, &board[i][j+1], &board[i-1][j+1], &board[i-1][j], &board[i-1][j-1], &board[i][j-1])
+					case 3:
+						cell.Neighbors = append(cell.Neighbors, &board[i-1][j], &board[i-1][j-1], &board[i][j-1])
 					}
-					if j < 3 {
-						cell.Neighbors = append(cell.Neighbors, &board[i+1][j+1])
-					}
-				}
-				if j > 0 {
-					cell.Neighbors = append(cell.Neighbors, &board[i][j-1])
-				}
-				if j < 3 {
-					cell.Neighbors = append(cell.Neighbors, &board[i][j+1])
 				}
 			}
 		}
