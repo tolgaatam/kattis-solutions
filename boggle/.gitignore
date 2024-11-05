@@ -1,0 +1,30 @@
+# Binaries for programs and plugins
+*.exe
+*.dll
+*.so
+*.dylib
+
+# Build directory
+/build/
+bin/
+
+# Vendor dependencies
+/vendor/
+
+# Output of the 'go coverage' tool
+*.out
+
+# Go modules
+go.sum
+
+# Go test binaries
+*.test
+
+# IDE settings
+## JetBrains
+.idea/
+## VS Code
+.vscode/
+
+# macOS files
+.DS_Store
