@@ -212,9 +212,6 @@ func main() {
 		// dfs
 		var dfs func(*BoggleCell, *TrieNode)
 		dfs = func(cell *BoggleCell, parentDictionaryNode *TrieNode) {
-			if visited[cell.Row][cell.Column] {
-				return
-			}
 			myDictionaryNode := parentDictionaryNode.GetChildNodeForCharacter(cell.Character)
 			if myDictionaryNode == nil {
 				return
@@ -243,7 +240,9 @@ func main() {
 
 			if myDictionaryNode.IsPrefixOfAWord() {
 				for n := 0; n < len(cell.Neighbors); n++ {
-					dfs(cell.Neighbors[n], myDictionaryNode)
+					if !visited[cell.Neighbors[n].Row][cell.Neighbors[n].Column] {
+						dfs(cell.Neighbors[n], myDictionaryNode)
+					}
 				}
 			}
 
