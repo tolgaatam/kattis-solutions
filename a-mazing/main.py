@@ -30,18 +30,6 @@ def find_move_anti(given_move):
 move_names = ["down", "left", "up", "right"]
 
 
-def output(s):
-    stdout.write(s)
-    stdout.write('\n')
-    stdout.flush()
-
-
-def output_move_name(move):
-    stdout.write(move_names[move])
-    stdout.write('\n')
-    stdout.flush()
-
-
 def dfs_base(curr_cell):
     curr_cell.visited = True
 
@@ -49,7 +37,7 @@ def dfs_base(curr_cell):
         dest_cell = find_destination(curr_cell, move)
         if dest_cell.visited:
             continue
-        output_move_name(move)
+        print(move_names[move])
         match input():
             case "solved":
                 exit(0)
@@ -71,7 +59,7 @@ def dfs(curr_cell, incoming_move):
         dest_cell = find_destination(curr_cell, move)
         if dest_cell.visited:
             continue
-        output_move_name(move)
+        print(move_names[move])
         match input():
             case "solved":
                 exit(0)
@@ -82,14 +70,14 @@ def dfs(curr_cell, incoming_move):
             case _:  # wrong
                 exit(1)
 
-    output_move_name(reverse_incoming_move)
+    print(move_names[reverse_incoming_move])
     input()  # input must be "ok" as I'm returning to a previous cell
 
 
 def main():
     dfs_base(maze[101][101])
 
-    output("no way out")
+    print("no way out")
     response = input()
     if response == "solved":
         exit(0)
