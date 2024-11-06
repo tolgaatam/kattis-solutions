@@ -34,7 +34,7 @@ def find_move_anti(given_move):
     return (given_move + 2) % 4
 
 
-move_names = ["up", "right", "down", "left"]
+move_names = ["down", "left", "up", "right"]
 
 
 def main():
