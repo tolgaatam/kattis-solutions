@@ -5,14 +5,7 @@ class Cell:
     def __init__(self, r, c):
         self.row = r
         self.column = c
-        self.walls = [False] * 4  # True -> wall
         self.visited = False
-
-
-class StackElement:
-    def __init__(self, cell, incoming_move):
-        self.cell = cell
-        self.incoming_move = incoming_move
 
 
 maze = [[Cell(i, j) for j in range(203)] for i in range(203)]
@@ -34,32 +27,39 @@ def find_move_anti(given_move):
     return (given_move + 2) % 4
 
 
+move_names = ["down", "left", "up", "right"]
+
+
 def output(s):
-    stdout.write(s + '\n')
+    stdout.write(s)
+    stdout.write('\n')
     stdout.flush()
 
 
-move_names = ["down", "left", "up", "right"]
+def output_move_name(move):
+    stdout.write(move_names[move])
+    stdout.write('\n')
+    stdout.flush()
+
 
 def dfs_base(curr_cell):
     curr_cell.visited = True
 
     for move in range(4):
-        if curr_cell.walls[move]:
-            continue
         dest_cell = find_destination(curr_cell, move)
         if dest_cell.visited:
             continue
-        output(move_names[move])
+        output_move_name(move)
         match input():
             case "solved":
                 exit(0)
             case "wall":
-                curr_cell.walls[move] = True
+                continue
             case "ok":
                 dfs(dest_cell, move)
             case _:  # wrong
                 exit(1)
+
 
 def dfs(curr_cell, incoming_move):
     curr_cell.visited = True
@@ -68,23 +68,21 @@ def dfs(curr_cell, incoming_move):
     for move in range(4):
         if move == reverse_incoming_move:
             continue
-        if curr_cell.walls[move]:
-            continue
         dest_cell = find_destination(curr_cell, move)
         if dest_cell.visited:
             continue
-        output(move_names[move])
+        output_move_name(move)
         match input():
             case "solved":
                 exit(0)
             case "wall":
-                curr_cell.walls[move] = True
+                continue
             case "ok":
                 dfs(dest_cell, move)
             case _:  # wrong
                 exit(1)
 
-    output(move_names[reverse_incoming_move])
+    output_move_name(reverse_incoming_move)
     input()  # input must be "ok" as I'm returning to a previous cell
 
 
