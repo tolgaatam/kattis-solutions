@@ -34,55 +34,69 @@ def find_move_anti(given_move):
     return (given_move + 2) % 4
 
 
+def output(s):
+    stdout.write(s + '\n')
+    stdout.flush()
+
+
 move_names = ["down", "left", "up", "right"]
+
+def dfs_base(curr_cell):
+    curr_cell.visited = True
+
+    for move in range(4):
+        if curr_cell.walls[move]:
+            continue
+        dest_cell = find_destination(curr_cell, move)
+        if dest_cell.visited:
+            continue
+        output(move_names[move])
+        match input():
+            case "solved":
+                exit(0)
+            case "wall":
+                curr_cell.walls[move] = True
+            case "ok":
+                dfs(dest_cell, move)
+            case _:  # wrong
+                exit(1)
+
+def dfs(curr_cell, incoming_move):
+    curr_cell.visited = True
+    reverse_incoming_move = find_move_anti(incoming_move)
+
+    for move in range(4):
+        if move == reverse_incoming_move:
+            continue
+        if curr_cell.walls[move]:
+            continue
+        dest_cell = find_destination(curr_cell, move)
+        if dest_cell.visited:
+            continue
+        output(move_names[move])
+        match input():
+            case "solved":
+                exit(0)
+            case "wall":
+                curr_cell.walls[move] = True
+            case "ok":
+                dfs(dest_cell, move)
+            case _:  # wrong
+                exit(1)
+
+    output(move_names[reverse_incoming_move])
+    input()  # input must be "ok" as I'm returning to a previous cell
 
 
 def main():
-    stack = [StackElement(maze[101][101], None)]
-    while True:
-        stack_object = stack[-1]
-        curr_cell = stack_object.cell
-        incoming_move = stack_object.incoming_move
-        curr_cell.visited = True
-        move_chosen = None
-        for move in filter(lambda m: (not find_destination(curr_cell, m).visited) and (not curr_cell.walls[m]),
-                           range(4)):
-            stdout.write(move_names[move] + '\n')
-            stdout.flush()
-            response = input()
-            match response:
-                case "solved":
-                    exit(0)
-                case "wall":
-                    curr_cell.walls[move] = True
-                case "ok":
-                    move_chosen = move
-                    break
-                case _:  # wrong
-                    exit(1)
+    dfs_base(maze[101][101])
 
-        if move_chosen is not None:
-            stack.append(StackElement(find_destination(curr_cell, move_chosen), move_chosen))
-        else:
-            if incoming_move is None:
-                stdout.write("no way out\n")
-                stdout.flush()
-                response = input()
-                if response == "solved":
-                    exit(0)
-                else:
-                    exit(1)
-
-            stdout.write(move_names[find_move_anti(incoming_move)] + '\n')
-            stdout.flush()
-            response = input()
-            match response:
-                case "ok":
-                    stack.pop()
-                case "solved":  # not expected
-                    exit(0)
-                case _:  #
-                    exit(1)
+    output("no way out")
+    response = input()
+    if response == "solved":
+        exit(0)
+    else:
+        exit(1)
 
 
 if __name__ == "__main__":
