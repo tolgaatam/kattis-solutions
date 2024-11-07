@@ -1,6 +1,6 @@
 from sys import stdout, stdin
 
-MOVE_NAMES = ("up\n", "left\n", "down\n", "right\n")
+MOVE_NAMES = (b"up\n", b"left\n", b"down\n", b"right\n")
 MOVE_CAUSED_MOVEMENT = (-203, -1, 203, 1)
 MOVE_POSSIBLE_NEXT_MOVES = ((3, 0, 1), (0, 1, 2), (1, 2, 3), (2, 3, 0))
 MOVE_REVERSE_MOVES = (2, 3, 0, 1)
@@ -23,7 +23,7 @@ def dfs_base(curr_cell):
         dest_cell = curr_cell + MOVE_CAUSED_MOVEMENT[move]
         if visited[dest_cell]:
             continue
-        stdout.write(MOVE_NAMES[move])
+        stdout.buffer.write(MOVE_NAMES[move])
         stdout.flush()
         match input_bf_fc():
             case 111:  # ok
@@ -39,7 +39,7 @@ def dfs(curr_cell, incoming_move):
         dest_cell = curr_cell + MOVE_CAUSED_MOVEMENT[move]
         if visited[dest_cell]:
             continue
-        stdout.write(MOVE_NAMES[move])
+        stdout.buffer.write(MOVE_NAMES[move])
         stdout.flush()
         match input_bf_fc():
             case 111:  # ok
@@ -47,7 +47,7 @@ def dfs(curr_cell, incoming_move):
             case 115:  # solved
                 exit(0)
 
-    stdout.write(MOVE_NAMES[MOVE_REVERSE_MOVES[incoming_move]])
+    stdout.buffer.write(MOVE_NAMES[MOVE_REVERSE_MOVES[incoming_move]])
     stdout.flush()
     input_bf()  # input must be "ok" as I'm returning to a previous cell
 
@@ -55,7 +55,7 @@ def dfs(curr_cell, incoming_move):
 def main():
     dfs_base(101 * 203 + 101)
 
-    stdout.write("no way out\n")
+    stdout.buffer.write(b"no way out\n")
     stdout.flush()
     if input_bf_fc() == 115:  # solved
         exit(0)
