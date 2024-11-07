@@ -27,36 +27,28 @@ class Move(IntEnum):
     def caused_movement(self):
         match self:
             case Move.UP:
-                return -1, 0
+                return -203
             case Move.LEFT:
-                return 0, -1
+                return -1
             case Move.DOWN:
-                return 1, 0
+                return 203
             case _:  # RIGHT
-                return 0, 1
+                return 1
 
 
-class Cell:
-    def __init__(self, r, c):
-        self.row = r
-        self.column = c
-        self.visited = False
-
-
-maze = [[Cell(i, j) for j in range(203)] for i in range(203)]
+visited = [False for i in range(203*203)]
 
 
 def find_destination(cell, next_move):
-    m_row, m_col = next_move.caused_movement()
-    return maze[cell.row + m_row][cell.column + m_col]
+    return cell + next_move.caused_movement()
 
 
 def dfs_base(curr_cell):
-    curr_cell.visited = True
+    visited[curr_cell] = True
 
     for move in Move:
         dest_cell = find_destination(curr_cell, move)
-        if dest_cell.visited:
+        if visited[dest_cell]:
             continue
         print(move)
         match input()[0]:
@@ -67,11 +59,11 @@ def dfs_base(curr_cell):
 
 
 def dfs(curr_cell, incoming_move):
-    curr_cell.visited = True
+    visited[curr_cell] = True
 
     for move in incoming_move.possible_next_moves():
         dest_cell = find_destination(curr_cell, move)
-        if dest_cell.visited:
+        if visited[dest_cell]:
             continue
         print(move)
         match input()[0]:
@@ -85,7 +77,7 @@ def dfs(curr_cell, incoming_move):
 
 
 def main():
-    dfs_base(maze[101][101])
+    dfs_base(101 * 203 + 101)
 
     print("no way out")
     if input()[0] == "s":  # solved
