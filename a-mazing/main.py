@@ -16,13 +16,13 @@ class Move(IntEnum):
     def possible_next_moves(self):
         match self:
             case Move.UP:
-                return Move.UP, Move.LEFT, Move.RIGHT
+                return Move.RIGHT, Move.UP, Move.LEFT
             case Move.LEFT:
-                return Move.LEFT, Move.DOWN, Move.UP
+                return Move.UP, Move.LEFT, Move.DOWN
             case Move.DOWN:
-                return Move.DOWN, Move.RIGHT, Move.LEFT
+                return Move.LEFT, Move.DOWN, Move.RIGHT
             case _:  # RIGHT
-                return Move.RIGHT, Move.UP, Move.DOWN
+                return Move.DOWN, Move.RIGHT, Move.UP
 
     def caused_movement(self):
         match self:
