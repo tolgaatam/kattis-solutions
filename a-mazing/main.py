@@ -1,4 +1,3 @@
-from sys import exit
 from enum import IntEnum
 
 
@@ -10,6 +9,31 @@ class Move(IntEnum):
 
     def __str__(self):
         return self.name.lower()
+
+    def reverse(self):
+        return Move((self.value + 2) % 4)
+
+    def possible_next_moves(self):
+        match self:
+            case Move.UP:
+                return Move.UP, Move.LEFT, Move.RIGHT
+            case Move.LEFT:
+                return Move.LEFT, Move.DOWN, Move.UP
+            case Move.DOWN:
+                return Move.DOWN, Move.RIGHT, Move.LEFT
+            case _:  # RIGHT
+                return Move.RIGHT, Move.UP, Move.DOWN
+
+    def caused_movement(self):
+        match self:
+            case Move.UP:
+                return -1, 0
+            case Move.LEFT:
+                return 0, -1
+            case Move.DOWN:
+                return 1, 0
+            case _:  # RIGHT
+                return 0, 1
 
 
 class Cell:
@@ -23,19 +47,8 @@ maze = [[Cell(i, j) for j in range(203)] for i in range(203)]
 
 
 def find_destination(cell, next_move):
-    match next_move:
-        case Move.UP:
-            return maze[cell.row + 1][cell.column]
-        case Move.LEFT:
-            return maze[cell.row][cell.column - 1]
-        case Move.DOWN:
-            return maze[cell.row - 1][cell.column]
-        case _:  # right
-            return maze[cell.row][cell.column + 1]
-
-
-def find_move_anti(given_move):
-    return Move((given_move.value + 2) % 4)
+    m_row, m_col = next_move.caused_movement()
+    return maze[cell.row + m_row][cell.column + m_col]
 
 
 def dfs_base(curr_cell):
@@ -47,38 +60,27 @@ def dfs_base(curr_cell):
             continue
         print(move)
         match input()[0]:
-            case "s":  # solved
-                exit(0)
-            case "w":  # wall
-                continue
             case "o":  # ok
                 dfs(dest_cell, move)
-            case _:  # wrong
-                exit(1)
+            case "s":  # solved
+                exit(0)
 
 
 def dfs(curr_cell, incoming_move):
     curr_cell.visited = True
-    reverse_incoming_move = find_move_anti(incoming_move)
 
-    for move in Move:
-        if move == reverse_incoming_move:
-            continue
+    for move in incoming_move.possible_next_moves():
         dest_cell = find_destination(curr_cell, move)
         if dest_cell.visited:
             continue
         print(move)
         match input()[0]:
-            case "s":  # solved
-                exit(0)
-            case "w":  # wall
-                continue
             case "o":  # ok
                 dfs(dest_cell, move)
-            case _:  # wrong
-                exit(1)
+            case "s":  # solved
+                exit(0)
 
-    print(reverse_incoming_move)
+    print(incoming_move.reverse())
     input()  # input must be "ok" as I'm returning to a previous cell
 
 
@@ -86,7 +88,7 @@ def main():
     dfs_base(maze[101][101])
 
     print("no way out")
-    if input() == "solved":
+    if input()[0] == "s":  # solved
         exit(0)
     else:
         exit(1)
