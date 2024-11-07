@@ -1,4 +1,4 @@
-from sys import stdout
+from sys import stdout, stdin
 
 MOVE_NAMES = ("up\n", "left\n", "down\n", "right\n")
 MOVE_CAUSED_MOVEMENT = (-203, -1, 203, 1)
@@ -9,10 +9,12 @@ visited = [False] * (203 * 203)
 
 
 def input_bf_fc():
-    return ord(input()[0])
+    return stdin.buffer.readline(6)[0]  # solved is the longest with 6 bytes
+
 
 def input_bf():
-    return input()
+    return stdin.buffer.readline(6)
+
 
 def dfs_base(curr_cell):
     visited[curr_cell] = True
@@ -53,7 +55,8 @@ def dfs(curr_cell, incoming_move):
 def main():
     dfs_base(101 * 203 + 101)
 
-    print("no way out")
+    stdout.write("no way out\n")
+    stdout.flush()
     if input_bf_fc() == 115:  # solved
         exit(0)
     else:
