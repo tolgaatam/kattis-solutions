@@ -14,9 +14,6 @@ bin/
 # Output of the 'go coverage' tool
 *.out
 
-# Go modules
-go.sum
-
 # Go test binaries
 *.test
 
