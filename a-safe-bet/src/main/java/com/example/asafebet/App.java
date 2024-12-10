@@ -15,19 +15,11 @@ public class App {
     }
 
     private static int moveRow(int row, byte direction){
-        return switch (direction) {
-            case 1, 3 -> row;
-            case 0 -> row - 1;
-            default -> row + 1; // 2 (DOWN)
-        };
+        return (direction % 2 == 1) ? row : (row - 1 + direction);
     }
 
     private static int moveColumn(int column, byte direction){
-        return switch (direction) {
-            case 0, 2 -> column;
-            case 1 -> column - 1;
-            default -> column + 1; // 3 (RIGHT)
-        };
+        return (direction % 2 == 0) ? column : (column - 2 + direction);
     }
 
     static long rows, cols, twoMirrorCount, oneMirrorCount;
