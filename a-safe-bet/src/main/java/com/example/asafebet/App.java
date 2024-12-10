@@ -82,7 +82,7 @@ public class App {
                 continue;
             }
 
-            if(!posLexicoSoFar.contains(basePosLexico)){ // if false; this cell was already visited in the base path, and we should not put any mirror here
+            if(!posLexicoSoFar.contains(basePosLexico)){ // this cell was not already visited in the base path, so we can insert mirrors here (otherwise, we would change the past...)
                 // valid cell, without mirror. let's try inserting mirrors
                 boolean anySuccess = false;
                 for(byte insertedMirror = 1; insertedMirror <= 2 && !anySuccess; insertedMirror++){
