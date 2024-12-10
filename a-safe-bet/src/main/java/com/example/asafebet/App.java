@@ -74,7 +74,7 @@ public class App {
             long basePosLexico = baseRow * cols + baseCol;
 
             Byte mirrorOnBaseCell = mirrors.get(basePosLexico);
-            if(mirrorOnBaseCell != null) { // there is mirror on the base cell. we should apply the mirror and continue (we cannot apply any mirror here)
+            if(mirrorOnBaseCell != null) { // there is a mirror on the base cell. we should apply the mirror and continue (we cannot add any mirror here)
                 baseDirection = mirrorReflection(baseDirection, mirrorOnBaseCell);
                 baseRow = moveRow(baseRow, baseDirection);
                 baseCol = moveColumn(baseCol, baseDirection);
