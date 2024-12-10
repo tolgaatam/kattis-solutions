@@ -3,6 +3,7 @@ package com.example.asafebet;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Set;
 import java.util.TreeSet;
 
 public class App {
@@ -31,7 +32,8 @@ public class App {
 
     static long rows, cols, twoMirrorCount, oneMirrorCount;
     static HashMap<Long, Byte> mirrors;
-    static TreeSet<Long> mirrorInsertedPositions;
+    static long smallestMirrorInsertedLexicoPosition;
+    static long numberOfInsertedMirrors;
     static boolean canBeOpenedWithoutMirror;
 
     public static void solve(){
@@ -64,6 +66,7 @@ public class App {
         baseRow = 0;
         baseCol = 0;
         baseDirection = 3; // start with right direction
+        Set<Long> posLexicoSoFar = new HashSet<>();
         while(true){
             if(baseRow < 0 || baseRow >= rows || baseCol < 0 || baseCol >= cols){ // out of bounds
                 break;
@@ -75,39 +78,46 @@ public class App {
                 baseDirection = mirrorReflection(baseDirection, mirrorOnBaseCell);
                 baseRow = moveRow(baseRow, baseDirection);
                 baseCol = moveColumn(baseCol, baseDirection);
+                posLexicoSoFar.add(basePosLexico);
                 continue;
             }
 
-            // valid cell, without mirror. let's try inserting mirrors
-            boolean anySuccess = false;
-            for(byte insertedMirror = 1; insertedMirror <= 2 && !anySuccess; insertedMirror++){
-                byte currDirection = mirrorReflection(baseDirection, insertedMirror);
-                int currRow = moveRow(baseRow, currDirection);
-                int currCol = moveColumn(baseCol, currDirection);
-                mirrors.put(basePosLexico, insertedMirror);
-                while(true){
-                    if(currRow == rows - 1 && currCol == cols){ // success
-                        mirrorInsertedPositions.add(basePosLexico);
-                        anySuccess = true;
-                        break;
+            if(!posLexicoSoFar.contains(basePosLexico)){ // if false; this cell was already visited in the base path, and we should not put any mirror here
+                // valid cell, without mirror. let's try inserting mirrors
+                boolean anySuccess = false;
+                for(byte insertedMirror = 1; insertedMirror <= 2 && !anySuccess; insertedMirror++){
+                    byte currDirection = mirrorReflection(baseDirection, insertedMirror);
+                    int currRow = moveRow(baseRow, currDirection);
+                    int currCol = moveColumn(baseCol, currDirection);
+                    mirrors.put(basePosLexico, insertedMirror);
+                    while(true){
+                        if(currRow == rows - 1 && currCol == cols){ // success
+                            numberOfInsertedMirrors ++;
+                            if(basePosLexico < smallestMirrorInsertedLexicoPosition){
+                                smallestMirrorInsertedLexicoPosition = basePosLexico;
+                            }
+                            anySuccess = true;
+                            break;
+                        }
+                        if(currRow < 0 || currRow >= rows || currCol < 0 || currCol >= cols){ // out of bounds
+                            break;
+                        }
+                        long currPosLexico = currRow * cols + currCol;
+                        Byte mirrorOnCurrCell = mirrors.get(currPosLexico);
+                        if(mirrorOnCurrCell != null) { // there is mirror on the curr cell. we should apply the curr mirror's reflection
+                            currDirection = mirrorReflection(currDirection, mirrorOnCurrCell);
+                        }
+                        currRow = moveRow(currRow, currDirection);
+                        currCol = moveColumn(currCol, currDirection);
                     }
-                    if(currRow < 0 || currRow >= rows || currCol < 0 || currCol >= cols){ // out of bounds
-                        break;
-                    }
-                    long currPosLexico = currRow * cols + currCol;
-                    Byte mirrorOnCurrCell = mirrors.get(currPosLexico);
-                    if(mirrorOnCurrCell != null) { // there is mirror on the curr cell. we should apply the curr mirror's reflection
-                        currDirection = mirrorReflection(currDirection, mirrorOnCurrCell);
-                    }
-                    currRow = moveRow(currRow, currDirection);
-                    currCol = moveColumn(currCol, currDirection);
                 }
+                mirrors.remove(basePosLexico);
             }
-            mirrors.remove(basePosLexico);
 
             // keep moving normally as if no mirror is inserted
             baseRow = moveRow(baseRow, baseDirection);
             baseCol = moveColumn(baseCol, baseDirection);
+            posLexicoSoFar.add(basePosLexico);
         }
     }
 
@@ -123,7 +133,8 @@ public class App {
                 oneMirrorCount = stdin.nextInt();
 
                 mirrors = new HashMap<>();
-                mirrorInsertedPositions = new TreeSet<>();
+                smallestMirrorInsertedLexicoPosition = Long.MAX_VALUE;
+                numberOfInsertedMirrors = 0;
                 canBeOpenedWithoutMirror = false;
 
                 for(int i = 0; i < twoMirrorCount; i++){
@@ -142,9 +153,8 @@ public class App {
 
             if(canBeOpenedWithoutMirror){
                 System.out.printf("Case %d: 0\n", caseCount);
-            } else if(!mirrorInsertedPositions.isEmpty()){
-                long smallestMirrorInsertedPos = mirrorInsertedPositions.first();
-                System.out.printf("Case %d: %d %d %d\n", caseCount, mirrorInsertedPositions.size(), smallestMirrorInsertedPos / cols + 1, smallestMirrorInsertedPos % cols + 1);
+            } else if(numberOfInsertedMirrors > 0){
+                System.out.printf("Case %d: %d %d %d\n", caseCount, numberOfInsertedMirrors, smallestMirrorInsertedLexicoPosition / cols + 1, smallestMirrorInsertedLexicoPosition % cols + 1);
             } else {
                 System.out.printf("Case %d: impossible\n", caseCount);
             }
