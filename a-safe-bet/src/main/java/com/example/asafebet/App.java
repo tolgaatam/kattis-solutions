@@ -3,6 +3,7 @@ package com.example.asafebet;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.TreeSet;
 
 public class App {
 
@@ -29,23 +30,13 @@ public class App {
         };
     }
 
-    private static byte directionToOrientation(byte direction){
-        return (direction % 2 == 0) ? (byte) 0 : (byte) 1;
-    }
-
     static long rows, cols, twoMirrorCount, oneMirrorCount;
     static HashMap<Long, Byte> mirrors;
-    static HashSet<Pair<Long, Byte>> visited;
-    static HashSet<Long> mirrorInsertedPositions;
-
-    static Long smallestMirrorInsertedPos;
+    static TreeSet<Long> mirrorInsertedPositions;
     static boolean canBeOpenedWithoutMirror;
 
     public static void dfs(long pos, byte direction, Pair<Long, Byte> insertedMirror){
         if(pos < 0 || pos >= rows * cols){ // out of bounds
-            return;
-        }
-        if(canBeOpenedWithoutMirror){
             return;
         }
 
@@ -56,24 +47,15 @@ public class App {
                     canBeOpenedWithoutMirror = true;
                 } else {
                     mirrorInsertedPositions.add(insertedMirror.first());
-                    if(smallestMirrorInsertedPos == null || insertedMirror.first() < smallestMirrorInsertedPos){
-                        smallestMirrorInsertedPos = insertedMirror.first();
-                    }
                 }
             } else if(direction == 2 && ((mirrorOnCell == null && insertedMirror == null) || (mirrorOnCell != null && mirrorOnCell == 1))){
                 if(mirrorOnCell == null && insertedMirror == null) {
                     mirrorInsertedPositions.add(pos);
-                    if(smallestMirrorInsertedPos == null || pos < smallestMirrorInsertedPos){
-                        smallestMirrorInsertedPos = pos;
-                    }
                 } else { // mirrorOnCell is 1, we do not need to do anything for successful path
                     if(insertedMirror == null){
                         canBeOpenedWithoutMirror = true;
                     } else {
                         mirrorInsertedPositions.add(insertedMirror.first());
-                        if(smallestMirrorInsertedPos == null || insertedMirror.first() < smallestMirrorInsertedPos){
-                            smallestMirrorInsertedPos = insertedMirror.first();
-                        }
                     }
                 }
             }
@@ -81,31 +63,26 @@ public class App {
             return;
         }
 
-        byte orientation = directionToOrientation(direction);
-        if(visited.contains(new Pair<>(pos, orientation))){
-            // we have already visited this cell with this direction, we are returning back on the same path at the moment. no need to proceed.
-            // no, we cannot be in a loop, because loops are not possible in this problem due to the nature of mirrors
-            return;
-        }
-
         Byte mirrorOnCell = mirrors.get(pos);
-        if(mirrorOnCell == null && insertedMirror != null && insertedMirror.first() == pos){
-            mirrorOnCell = insertedMirror.second();
-        }
 
         if(mirrorOnCell != null) { // there is mirror on the cell. we should just apply the mirror and continue
             byte newDirection = mirrorReflection(direction, mirrorOnCell);
             dfs(move(pos, newDirection), newDirection, insertedMirror);
         } else {
-            visited.add(new Pair<>(pos, orientation));
             dfs(move(pos, direction), direction, insertedMirror);
-            visited.remove(new Pair<>(pos, orientation));
             if(canBeOpenedWithoutMirror){
                 return;
             }
             if(insertedMirror == null){
-                dfs(move(pos, mirrorReflection(direction, (byte) 1)), mirrorReflection(direction, (byte) 1), new Pair<>(pos, (byte) 1));
-                dfs(move(pos, mirrorReflection(direction, (byte) 2)), mirrorReflection(direction, (byte) 2), new Pair<>(pos, (byte) 2));
+                mirrors.put(pos, (byte) 1); // add mirror temporarily
+                byte newDirection = mirrorReflection(direction, (byte) 1);
+                dfs(move(pos, newDirection), newDirection, new Pair<>(pos, (byte) 1));
+
+                mirrors.put(pos, (byte) 2); // replace mirror with another mirror
+                newDirection = mirrorReflection(direction, (byte) 2);
+                dfs(move(pos, newDirection), newDirection, new Pair<>(pos, (byte) 2));
+
+                mirrors.remove(pos); // remove the mirror after trying both, before reverting back
             }
         }
 
@@ -113,6 +90,9 @@ public class App {
 
     public static void main(String[] args) throws IOException {
         var stdin = new FastConsoleReader();
+
+        mirrors = new HashMap<>();
+        mirrorInsertedPositions = new TreeSet<>();
 
         int caseCount = 0;
         while(true){
@@ -122,10 +102,8 @@ public class App {
                 twoMirrorCount = stdin.nextInt();
                 oneMirrorCount = stdin.nextInt();
 
-                mirrors = new HashMap<>();
-                visited = new HashSet<>();
-                mirrorInsertedPositions = new HashSet<>();
-                smallestMirrorInsertedPos = null;
+                mirrors.clear();
+                mirrorInsertedPositions.clear();
                 canBeOpenedWithoutMirror = false;
 
                 for(int i = 0; i < twoMirrorCount; i++){
@@ -144,7 +122,8 @@ public class App {
 
             if(canBeOpenedWithoutMirror){
                 System.out.printf("Case %d: 0\n", caseCount);
-            } else if(smallestMirrorInsertedPos != null){
+            } else if(!mirrorInsertedPositions.isEmpty()){
+                long smallestMirrorInsertedPos = mirrorInsertedPositions.first();
                 System.out.printf("Case %d: %d %d %d\n", caseCount, mirrorInsertedPositions.size(), smallestMirrorInsertedPos / cols + 1, smallestMirrorInsertedPos % cols + 1);
             } else {
                 System.out.printf("Case %d: impossible\n", caseCount);
