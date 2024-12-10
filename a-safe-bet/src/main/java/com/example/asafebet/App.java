@@ -14,19 +14,19 @@ public class App {
         return (byte) ((-1 * initialDirection + 3 + mirrorType * 2) % 4);
     }
 
-    private static long move(long pos, byte direction){
-        if(pos % cols == 0 && direction == 1){ // left
-            return -1;
-        }
-        if(pos % cols == cols - 1 && direction == 3){ // right
-            return -1;
-        }
+    private static int moveRow(int row, byte direction){
         return switch (direction) {
-            case 0 -> pos - cols;
-            case 1 -> pos - 1;
-            case 2 -> pos + cols;
-            case 3 -> pos + 1;
-            default -> -1;
+            case 1, 3 -> row;
+            case 0 -> row - 1;
+            default -> row + 1; // 2 (DOWN)
+        };
+    }
+
+    private static int moveColumn(int column, byte direction){
+        return switch (direction) {
+            case 0, 2 -> column;
+            case 1 -> column - 1;
+            default -> column + 1; // 3 (RIGHT)
         };
     }
 
@@ -35,13 +35,14 @@ public class App {
     static TreeSet<Long> mirrorInsertedPositions;
     static boolean canBeOpenedWithoutMirror;
 
-    public static void dfs(long pos, byte direction, Pair<Long, Byte> insertedMirror){
-        if(pos < 0 || pos >= rows * cols){ // out of bounds
+    public static void dfs(int row, int col, byte direction, Pair<Long, Byte> insertedMirror){
+        if(row < 0 || row >= rows || col < 0 || col >= cols){ // out of bounds
             return;
         }
+        long posLexico = row * cols + col;
 
-        if(pos == rows * cols - 1){
-            Byte mirrorOnCell = mirrors.get(pos);
+        if(row == rows - 1 && col == cols - 1){ // success
+            Byte mirrorOnCell = mirrors.get(posLexico);
             if(direction == 3 && mirrorOnCell == null){ // we go straight to success and there is no mirror to block us
                 if(insertedMirror == null){
                     canBeOpenedWithoutMirror = true;
@@ -50,7 +51,7 @@ public class App {
                 }
             } else if(direction == 2 && ((mirrorOnCell == null && insertedMirror == null) || (mirrorOnCell != null && mirrorOnCell == 1))){
                 if(mirrorOnCell == null && insertedMirror == null) {
-                    mirrorInsertedPositions.add(pos);
+                    mirrorInsertedPositions.add(posLexico);
                 } else { // mirrorOnCell is 1, we do not need to do anything for successful path
                     if(insertedMirror == null){
                         canBeOpenedWithoutMirror = true;
@@ -63,26 +64,26 @@ public class App {
             return;
         }
 
-        Byte mirrorOnCell = mirrors.get(pos);
+        Byte mirrorOnCell = mirrors.get(posLexico);
 
         if(mirrorOnCell != null) { // there is mirror on the cell. we should just apply the mirror and continue
             byte newDirection = mirrorReflection(direction, mirrorOnCell);
-            dfs(move(pos, newDirection), newDirection, insertedMirror);
+            dfs(moveRow(row, newDirection), moveColumn(col, newDirection), newDirection, insertedMirror);
         } else {
-            dfs(move(pos, direction), direction, insertedMirror);
+            dfs(moveRow(row, direction), moveColumn(col, direction), direction, insertedMirror);
             if(canBeOpenedWithoutMirror){
                 return;
             }
             if(insertedMirror == null){
-                mirrors.put(pos, (byte) 1); // add mirror temporarily
+                mirrors.put(posLexico, (byte) 1); // add mirror temporarily
                 byte newDirection = mirrorReflection(direction, (byte) 1);
-                dfs(move(pos, newDirection), newDirection, new Pair<>(pos, (byte) 1));
+                dfs(moveRow(row, newDirection), moveColumn(col, newDirection), newDirection, new Pair<>(posLexico, (byte) 1));
 
-                mirrors.put(pos, (byte) 2); // replace mirror with another mirror
+                mirrors.put(posLexico, (byte) 2); // replace mirror with another mirror
                 newDirection = mirrorReflection(direction, (byte) 2);
-                dfs(move(pos, newDirection), newDirection, new Pair<>(pos, (byte) 2));
+                dfs(moveRow(row, newDirection), moveColumn(col, newDirection), newDirection, new Pair<>(posLexico, (byte) 2));
 
-                mirrors.remove(pos); // remove the mirror after trying both, before reverting back
+                mirrors.remove(posLexico); // remove the mirror after trying both, before reverting back
             }
         }
 
@@ -116,7 +117,7 @@ public class App {
                 break;
             }
 
-            dfs(0, (byte) 3, null);
+            dfs(0, 0, (byte) 3, null);
 
             caseCount++;
 
