@@ -138,9 +138,10 @@ public class App {
                 break;
             }
 
-            // START: logic part
-
             dfs(0, (byte) 3, null);
+
+            caseCount++;
+
             if(canBeOpenedWithoutMirror){
                 System.out.printf("Case %d: 0\n", caseCount);
             } else if(smallestMirrorInsertedPos != null){
@@ -148,9 +149,6 @@ public class App {
             } else {
                 System.out.printf("Case %d: impossible\n", caseCount);
             }
-
-            // END: logic part
-            caseCount++;
 
         }
     }
