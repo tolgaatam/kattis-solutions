@@ -75,7 +75,7 @@ public class App {
         List<Event> events = new ArrayList<>();
         for(var horizontalLine : horizontalLines){
             events.add(new Event(horizontalLine.start(), horizontalLine.main(), horizontalLine.main(), (byte) 1));
-            events.add(new Event(horizontalLine.end(), horizontalLine.main(), horizontalLine.main(), (byte) -1));
+            events.add(new Event(horizontalLine.end()+1, horizontalLine.main(), horizontalLine.main(), (byte) -1));
         }
         for(var verticalLine : verticalLines){
             events.add(new Event(verticalLine.main(), verticalLine.start(), verticalLine.end(), (byte) 0));
