@@ -11,62 +11,10 @@ public class App {
         return (byte) ((-1 * initialDirection + 3 + mirrorType * 2) % 4);
     }
 
-    private static long moveRow(long row, byte direction){
-        return (direction % 2 == 1) ? row : (row - 1 + direction);
-    }
-
-    private static long moveColumn(long column, byte direction){
-        return (direction % 2 == 0) ? column : (column - 2 + direction);
-    }
-
-    // TODO: Remove this and replace the list by a TreeSet
-    private static Long findSmallestGreaterThan(ArrayList<Long> list, long element) { // assumes the list is sorted
-        // Use binary search to find the index of the smallest element greater than `element`
-        int index = Collections.binarySearch(list, element);
-
-        // If the exact element is found, move to the next element
-        if (index >= 0) {
-            index++;
-        } else {
-            // If not found, binarySearch returns (-(insertion point) - 1)
-            index = -index - 1;
-        }
-
-        // Check if the index is within bounds
-        if (index < list.size()) {
-            return list.get(index);
-        } else {
-            // Return null if no such element exists
-            return null;
-        }
-    }
-
-    // TODO: Remove this and replace the list by a TreeSet
-    public static Long findGreatestSmallerThan(ArrayList<Long> list, long element) { // assumes the list is sorted
-        // Use binary search to find the index of the element
-        int index = Collections.binarySearch(list, element);
-
-        // If the exact element is found, move to the previous element
-        if (index >= 0) {
-            index--;
-        } else {
-            // If not found, binarySearch returns (-(insertion point) - 1)
-            index = -(index + 1) - 1;
-        }
-
-        // Check if the index is within bounds
-        if (index >= 0) {
-            return list.get(index);
-        } else {
-            // Return null if no such element exists
-            return null;
-        }
-    }
-
     static long rows, cols, twoMirrorCount, oneMirrorCount;
     static HashMap<Long, Byte> mirrors;
-    static Map<Long, ArrayList<Long>> mirrorsByRow;
-    static Map<Long, ArrayList<Long>> mirrorsByColumn;
+    static Map<Long, TreeSet<Long>> mirrorsByRow;
+    static Map<Long, TreeSet<Long>> mirrorsByColumn;
     static long smallestMirrorInsertedLexicoPosition;
     static long numberOfInsertedMirrors;
     static boolean canBeOpenedWithoutMirror;
@@ -116,7 +64,7 @@ public class App {
         // first, let's see if we can reach the end without any mirrors
         while(true){
             if(currDirection == 0){ // up
-                Long nextRow = findGreatestSmallerThan(mirrorsByColumn.get(currCol), currRow);
+                Long nextRow = mirrorsByColumn.get(currCol).lower(currRow);
                 if(nextRow == null){
                     originalVerticalLines.add(new FlatLine<>(currCol, 0L, currRow - 1));
                     break;
@@ -125,7 +73,7 @@ public class App {
                     currRow = nextRow;
                 }
             } else if (currDirection == 1) { // left
-                Long nextCol = findGreatestSmallerThan(mirrorsByRow.get(currRow), currCol);
+                Long nextCol = mirrorsByRow.get(currRow).lower(currCol);
                 if(nextCol == null){
                     originalHorizontalLines.add(new FlatLine<>(currRow, 0L, currCol - 1));
                     break;
@@ -134,7 +82,7 @@ public class App {
                     currCol = nextCol;
                 }
             } else if (currDirection == 2) { // down
-                Long nextRow = findSmallestGreaterThan(mirrorsByColumn.get(currCol), currRow);
+                Long nextRow = mirrorsByColumn.get(currCol).higher(currRow);
                 if(nextRow == null){
                     originalVerticalLines.add(new FlatLine<>(currCol, currRow + 1, rows - 1));
                     break;
@@ -143,7 +91,7 @@ public class App {
                     currRow = nextRow;
                 }
             } else { // right
-                Long nextCol = findSmallestGreaterThan(mirrorsByRow.get(currRow), currCol);
+                Long nextCol = mirrorsByRow.get(currRow).higher(currCol);
                 if(nextCol == null){
                     originalHorizontalLines.add(new FlatLine<>(currRow, currCol + 1, cols - 1));
                     break;
@@ -169,7 +117,7 @@ public class App {
 
         while(true){
             if(currDirection == 0){ // up
-                Long nextRow = findGreatestSmallerThan(mirrorsByColumn.get(currCol), currRow);
+                Long nextRow = mirrorsByColumn.get(currCol).lower(currRow);
                 if(nextRow == null){
                     reverseVerticalLines.add(new FlatLine<>(currCol, 0L, currRow - 1));
                     break;
@@ -178,7 +126,7 @@ public class App {
                     currRow = nextRow;
                 }
             } else if (currDirection == 1) { // left
-                Long nextCol = findGreatestSmallerThan(mirrorsByRow.get(currRow), currCol);
+                Long nextCol = mirrorsByRow.get(currRow).lower(currCol);
                 if(nextCol == null){
                     reverseHorizontalLines.add(new FlatLine<>(currRow, 0L, currCol - 1));
                     break;
@@ -187,7 +135,7 @@ public class App {
                     currCol = nextCol;
                 }
             } else if (currDirection == 2) { // down
-                Long nextRow = findSmallestGreaterThan(mirrorsByColumn.get(currCol), currRow);
+                Long nextRow = mirrorsByColumn.get(currCol).higher(currRow);
                 if(nextRow == null){
                     reverseVerticalLines.add(new FlatLine<>(currCol, currRow + 1, rows - 1));
                     break;
@@ -196,7 +144,7 @@ public class App {
                     currRow = nextRow;
                 }
             } else { // right
-                Long nextCol = findSmallestGreaterThan(mirrorsByRow.get(currRow), currCol);
+                Long nextCol = mirrorsByRow.get(currRow).higher(currCol);
                 if(nextCol == null){
                     reverseHorizontalLines.add(new FlatLine<>(currRow, currCol + 1, cols - 1));
                     break;
@@ -235,27 +183,23 @@ public class App {
                     row = stdin.nextLong()-1;
                     col = stdin.nextLong()-1;
                     mirrors.put(row * cols + col, (byte) 2);
-                    mirrorsByRow.computeIfAbsent(row, k -> new ArrayList<>()).add(col);
-                    mirrorsByColumn.computeIfAbsent(col, k -> new ArrayList<>()).add(row);
+                    mirrorsByRow.computeIfAbsent(row, k -> new TreeSet<>()).add(col);
+                    mirrorsByColumn.computeIfAbsent(col, k -> new TreeSet<>()).add(row);
                 }
                 for(int i = 0; i < oneMirrorCount; i++){
                     row = stdin.nextLong()-1;
                     col = stdin.nextLong()-1;
                     mirrors.put(row * cols + col, (byte) 1);
-                    mirrorsByRow.computeIfAbsent(row, k -> new ArrayList<>()).add(col);
-                    mirrorsByColumn.computeIfAbsent(col, k -> new ArrayList<>()).add(row);
+                    mirrorsByRow.computeIfAbsent(row, k -> new TreeSet<>()).add(col);
+                    mirrorsByColumn.computeIfAbsent(col, k -> new TreeSet<>()).add(row);
                 }
             } catch (NullPointerException e){ // means that the input stream is closed
                 break;
             }
 
             // add imaginary mirrors to the start and success points, to be able to stop properly
-            mirrorsByRow.computeIfAbsent(rows - 1, k -> new ArrayList<>()).add(cols);
-            mirrorsByRow.computeIfAbsent(0L, k -> new ArrayList<>()).add(-1L);
-
-            // sort every arraylist in mirrorsByRow and mirrorsByColumn
-            mirrorsByRow.values().forEach(Collections::sort);
-            mirrorsByColumn.values().forEach(Collections::sort);
+            mirrorsByRow.computeIfAbsent(rows - 1, k -> new TreeSet<>()).add(cols);
+            mirrorsByRow.computeIfAbsent(0L, k -> new TreeSet<>()).add(-1L);
 
             solve();
 
