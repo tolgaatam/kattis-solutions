@@ -163,6 +163,8 @@ public class App {
     public static void main(String[] args) throws IOException {
         var stdin = new FastConsoleReader();
 
+        var sb = new StringBuilder(1024 * 32);
+
         int caseCount = 0;
         while(true){
             try{
@@ -205,14 +207,21 @@ public class App {
 
             caseCount++;
 
+            sb.append("Case ").append(caseCount).append(": ");
+
             if(canBeOpenedWithoutMirror){
-                System.out.printf("Case %d: 0\n", caseCount);
+                sb.append('0');
             } else if(numberOfInsertedMirrors > 0){
-                System.out.printf("Case %d: %d %d %d\n", caseCount, numberOfInsertedMirrors, smallestMirrorInsertedLexicoPosition / cols + 1, smallestMirrorInsertedLexicoPosition % cols + 1);
+                sb.append(numberOfInsertedMirrors).append(' ');
+                sb.append(smallestMirrorInsertedLexicoPosition / cols + 1).append(' ');
+                sb.append(smallestMirrorInsertedLexicoPosition % cols + 1);
             } else {
-                System.out.printf("Case %d: impossible\n", caseCount);
+                sb.append("impossible");
             }
 
+            sb.append('\n');
         }
+
+        System.out.print(sb);
     }
 }
