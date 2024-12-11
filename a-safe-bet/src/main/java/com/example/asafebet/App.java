@@ -19,6 +19,7 @@ public class App {
         return (direction % 2 == 0) ? column : (column - 2 + direction);
     }
 
+    // TODO: Remove this and replace the list by a TreeSet
     private static Long findSmallestGreaterThan(ArrayList<Long> list, long element) { // assumes the list is sorted
         // Use binary search to find the index of the smallest element greater than `element`
         int index = Collections.binarySearch(list, element);
@@ -40,6 +41,7 @@ public class App {
         }
     }
 
+    // TODO: Remove this and replace the list by a TreeSet
     public static Long findGreatestSmallerThan(ArrayList<Long> list, long element) { // assumes the list is sorted
         // Use binary search to find the index of the element
         int index = Collections.binarySearch(list, element);
@@ -69,52 +71,93 @@ public class App {
     static long numberOfInsertedMirrors;
     static boolean canBeOpenedWithoutMirror;
 
+    public static void sweepLine(List<FlatLine<Long, Long, Long>> horizontalLines, List<FlatLine<Long, Long, Long>> verticalLines){
+        List<Event> events = new ArrayList<>();
+        for(var horizontalLine : horizontalLines){
+            events.add(new Event(horizontalLine.start(), horizontalLine.main(), horizontalLine.main(), (byte) 1));
+            events.add(new Event(horizontalLine.end() + 1, horizontalLine.main(), horizontalLine.main(), (byte) -1));
+        }
+        for(var verticalLine : verticalLines){
+            events.add(new Event(verticalLine.main(), verticalLine.start(), verticalLine.end(), (byte) 0));
+        }
+
+        events.sort((a, b) -> {
+            if (a.col() == b.col()) {
+                return b.type() - a.type();
+            }
+            return (int) (a.col() - b.col());
+        });
+
+        var segTree = new SegmentTree((int) rows);
+        var activeRows = new TreeSet<Long>();
+
+        // Process all events
+        for (Event event : events) {
+            if (event.type() == 1) {
+                // Start event: Add horizontal line to the Segment Tree
+                segTree.update((int) event.row1(), (int) event.row2(), 1);
+                activeRows.add(event.row1());
+            } else if (event.type() == -1) {
+                // End event: Remove horizontal line from the Segment Tree
+                segTree.update((int) event.row1(), (int) event.row2(), -1);
+                activeRows.remove(event.row1());
+            } else if (event.type() == 0) {
+                // Query event: Count intersections with active horizontal lines
+                numberOfInsertedMirrors += segTree.query((int) event.row1(), (int) event.row2());
+                var minimumIntersectingRow = activeRows.higher(event.row1());
+                if(minimumIntersectingRow != null){
+                    smallestMirrorInsertedLexicoPosition = Math.min(smallestMirrorInsertedLexicoPosition, minimumIntersectingRow * cols + event.col());
+                }
+            }
+        }
+    }
+
     public static void solve(){
         long currRow = 0, currCol = -1L;
         byte currDirection = 3; // start with `right` direction
-        List<Triple<Long, Long, Long>> originalHorizontalLines = new ArrayList<>();
-        List<Triple<Long, Long, Long>> originalVerticalLines = new ArrayList<>();
+        List<FlatLine<Long, Long, Long>> originalHorizontalLines = new ArrayList<>();
+        List<FlatLine<Long, Long, Long>> originalVerticalLines = new ArrayList<>();
 
         // first, let's see if we can reach the end without any mirrors
         while(true){
             if(currDirection == 0){ // up
                 Long nextRow = findGreatestSmallerThan(mirrorsByColumn.get(currCol), currRow);
                 if(nextRow == null){
-                    originalVerticalLines.add(new Triple<>(currCol, 0L, currRow - 1));
+                    originalVerticalLines.add(new FlatLine<>(currCol, 0L, currRow - 1));
                     break;
                 } else {
-                    originalVerticalLines.add(new Triple<>(currCol, nextRow + 1, currRow - 1));
+                    originalVerticalLines.add(new FlatLine<>(currCol, nextRow + 1, currRow - 1));
                     currRow = nextRow;
                 }
             } else if (currDirection == 1) { // left
                 Long nextCol = findGreatestSmallerThan(mirrorsByRow.get(currRow), currCol);
                 if(nextCol == null){
-                    originalHorizontalLines.add(new Triple<>(currRow, 0L, currCol - 1));
+                    originalHorizontalLines.add(new FlatLine<>(currRow, 0L, currCol - 1));
                     break;
                 } else {
-                    originalHorizontalLines.add(new Triple<>(currRow, nextCol + 1, currCol - 1));
+                    originalHorizontalLines.add(new FlatLine<>(currRow, nextCol + 1, currCol - 1));
                     currCol = nextCol;
                 }
             } else if (currDirection == 2) { // down
                 Long nextRow = findSmallestGreaterThan(mirrorsByColumn.get(currCol), currRow);
                 if(nextRow == null){
-                    originalVerticalLines.add(new Triple<>(currCol, currRow + 1, rows - 1));
+                    originalVerticalLines.add(new FlatLine<>(currCol, currRow + 1, rows - 1));
                     break;
                 } else {
-                    originalVerticalLines.add(new Triple<>(currCol, currRow + 1, nextRow - 1));
+                    originalVerticalLines.add(new FlatLine<>(currCol, currRow + 1, nextRow - 1));
                     currRow = nextRow;
                 }
             } else { // right
                 Long nextCol = findSmallestGreaterThan(mirrorsByRow.get(currRow), currCol);
                 if(nextCol == null){
-                    originalHorizontalLines.add(new Triple<>(currRow, currCol + 1, cols - 1));
+                    originalHorizontalLines.add(new FlatLine<>(currRow, currCol + 1, cols - 1));
                     break;
                 } else {
                     if(nextCol == cols){ // we reached the end without any mirrors. no other processing is needed.
                         canBeOpenedWithoutMirror = true;
                         return;
                     }
-                    originalHorizontalLines.add(new Triple<>(currRow, currCol + 1, nextCol - 1));
+                    originalHorizontalLines.add(new FlatLine<>(currRow, currCol + 1, nextCol - 1));
                     currCol = nextCol;
                 }
             }
@@ -126,76 +169,53 @@ public class App {
         currRow = rows - 1;
         currCol = cols;
         currDirection = 1; // start with `left` direction
-        List<Triple<Long, Long, Long>> reverseHorizontalLines = new ArrayList<>();
-        List<Triple<Long, Long, Long>> reverseVerticalLines = new ArrayList<>();
+        List<FlatLine<Long, Long, Long>> reverseHorizontalLines = new ArrayList<>();
+        List<FlatLine<Long, Long, Long>> reverseVerticalLines = new ArrayList<>();
 
         while(true){
             if(currDirection == 0){ // up
                 Long nextRow = findGreatestSmallerThan(mirrorsByColumn.get(currCol), currRow);
                 if(nextRow == null){
-                    reverseVerticalLines.add(new Triple<>(currCol, 0L, currRow - 1));
+                    reverseVerticalLines.add(new FlatLine<>(currCol, 0L, currRow - 1));
                     break;
                 } else {
-                    reverseVerticalLines.add(new Triple<>(currCol, nextRow + 1, currRow - 1));
+                    reverseVerticalLines.add(new FlatLine<>(currCol, nextRow + 1, currRow - 1));
                     currRow = nextRow;
                 }
             } else if (currDirection == 1) { // left
                 Long nextCol = findGreatestSmallerThan(mirrorsByRow.get(currRow), currCol);
                 if(nextCol == null){
-                    reverseHorizontalLines.add(new Triple<>(currRow, 0L, currCol - 1));
+                    reverseHorizontalLines.add(new FlatLine<>(currRow, 0L, currCol - 1));
                     break;
                 } else {
-                    reverseHorizontalLines.add(new Triple<>(currRow, nextCol + 1, currCol - 1));
+                    reverseHorizontalLines.add(new FlatLine<>(currRow, nextCol + 1, currCol - 1));
                     currCol = nextCol;
                 }
             } else if (currDirection == 2) { // down
                 Long nextRow = findSmallestGreaterThan(mirrorsByColumn.get(currCol), currRow);
                 if(nextRow == null){
-                    reverseVerticalLines.add(new Triple<>(currCol, currRow + 1, rows - 1));
+                    reverseVerticalLines.add(new FlatLine<>(currCol, currRow + 1, rows - 1));
                     break;
                 } else {
-                    reverseVerticalLines.add(new Triple<>(currCol, currRow + 1, nextRow - 1));
+                    reverseVerticalLines.add(new FlatLine<>(currCol, currRow + 1, nextRow - 1));
                     currRow = nextRow;
                 }
             } else { // right
                 Long nextCol = findSmallestGreaterThan(mirrorsByRow.get(currRow), currCol);
                 if(nextCol == null){
-                    reverseHorizontalLines.add(new Triple<>(currRow, currCol + 1, cols - 1));
+                    reverseHorizontalLines.add(new FlatLine<>(currRow, currCol + 1, cols - 1));
                     break;
                 } else {
-                    reverseHorizontalLines.add(new Triple<>(currRow, currCol + 1, nextCol - 1));
+                    reverseHorizontalLines.add(new FlatLine<>(currRow, currCol + 1, nextCol - 1));
                     currCol = nextCol;
                 }
             }
             currDirection = mirrorReflection(currDirection, mirrors.get(currRow * cols + currCol));
         }
 
-        // TODO: make a more efficient implementation here. current is naive implementation: O(n^2) complexity and fails the last two tests due to time.
-        for(Triple<Long, Long, Long> originalHorizontalLine : originalHorizontalLines){
-            for(Triple<Long, Long, Long> reverseVerticalLine : reverseVerticalLines){
-                if(originalHorizontalLine._1() >= reverseVerticalLine._2() && originalHorizontalLine._1() <= reverseVerticalLine._3() &&
-                        reverseVerticalLine._1() >= originalHorizontalLine._2() && reverseVerticalLine._1() <= originalHorizontalLine._3()){
-                    long lexicoPosition = originalHorizontalLine._1() * cols + reverseVerticalLine._1();
-                    if(lexicoPosition < smallestMirrorInsertedLexicoPosition){
-                        smallestMirrorInsertedLexicoPosition = lexicoPosition;
-                    }
-                    numberOfInsertedMirrors++;
-                }
-            }
-        }
-
-        for(Triple<Long, Long, Long> originalVerticalLine : originalVerticalLines){
-            for(Triple<Long, Long, Long> reverseHorizontalLine : reverseHorizontalLines){
-                if(originalVerticalLine._1() >= reverseHorizontalLine._2() && originalVerticalLine._1() <= reverseHorizontalLine._3() &&
-                        reverseHorizontalLine._1() >= originalVerticalLine._2() && reverseHorizontalLine._1() <= originalVerticalLine._3()){
-                    long lexicoPosition = reverseHorizontalLine._1() * cols + originalVerticalLine._1();
-                    if(lexicoPosition < smallestMirrorInsertedLexicoPosition){
-                        smallestMirrorInsertedLexicoPosition = lexicoPosition;
-                    }
-                    numberOfInsertedMirrors++;
-                }
-            }
-        }
+        // Implementing sweep line algorithm
+        sweepLine(originalHorizontalLines, reverseVerticalLines);
+        sweepLine(reverseHorizontalLines, originalVerticalLines);
     }
 
     public static void main(String[] args) throws IOException {
