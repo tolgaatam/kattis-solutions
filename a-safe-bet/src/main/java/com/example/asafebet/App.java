@@ -75,7 +75,7 @@ public class App {
         List<Event> events = new ArrayList<>();
         for(var horizontalLine : horizontalLines){
             events.add(new Event(horizontalLine.start(), horizontalLine.main(), horizontalLine.main(), (byte) 1));
-            events.add(new Event(horizontalLine.end() + 1, horizontalLine.main(), horizontalLine.main(), (byte) -1));
+            events.add(new Event(horizontalLine.end(), horizontalLine.main(), horizontalLine.main(), (byte) -1));
         }
         for(var verticalLine : verticalLines){
             events.add(new Event(verticalLine.main(), verticalLine.start(), verticalLine.end(), (byte) 0));
@@ -88,25 +88,20 @@ public class App {
             return (int) (a.col() - b.col());
         });
 
-        var segTree = new SegmentTree((int) rows);
         var activeRows = new TreeSet<Long>();
 
         // Process all events
         for (Event event : events) {
-            if (event.type() == 1) {
-                // Start event: Add horizontal line to the Segment Tree
-                segTree.update((int) event.row1(), (int) event.row2(), 1);
-                activeRows.add(event.row1());
-            } else if (event.type() == -1) {
-                // End event: Remove horizontal line from the Segment Tree
-                segTree.update((int) event.row1(), (int) event.row2(), -1);
-                activeRows.remove(event.row1());
-            } else if (event.type() == 0) {
-                // Query event: Count intersections with active horizontal lines
-                numberOfInsertedMirrors += segTree.query((int) event.row1(), (int) event.row2());
-                var minimumIntersectingRow = activeRows.higher(event.row1());
-                if(minimumIntersectingRow != null){
-                    smallestMirrorInsertedLexicoPosition = Math.min(smallestMirrorInsertedLexicoPosition, minimumIntersectingRow * cols + event.col());
+            switch (event.type()) {
+                case 1 -> activeRows.add(event.row1());
+                case -1 -> activeRows.remove(event.row1());
+                case 0 -> {
+                    var intersectingRows = activeRows.subSet(event.row1(), event.row2() + 1);
+                    numberOfInsertedMirrors += intersectingRows.size();
+                    try{
+                        var minimumIntersectingRow = intersectingRows.first();
+                        smallestMirrorInsertedLexicoPosition = Math.min(smallestMirrorInsertedLexicoPosition, minimumIntersectingRow * cols + event.col());
+                    } catch (NoSuchElementException ignored){}
                 }
             }
         }
@@ -213,7 +208,6 @@ public class App {
             currDirection = mirrorReflection(currDirection, mirrors.get(currRow * cols + currCol));
         }
 
-        // Implementing sweep line algorithm
         sweepLine(originalHorizontalLines, reverseVerticalLines);
         sweepLine(reverseHorizontalLines, originalVerticalLines);
     }
