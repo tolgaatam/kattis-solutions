@@ -14,11 +14,11 @@ public class App {
         return (byte) ((-1 * initialDirection + 3 + mirrorType * 2) % 4);
     }
 
-    private static int moveRow(int row, byte direction){
+    private static long moveRow(long row, byte direction){
         return (direction % 2 == 1) ? row : (row - 1 + direction);
     }
 
-    private static int moveColumn(int column, byte direction){
+    private static long moveColumn(long column, byte direction){
         return (direction % 2 == 0) ? column : (column - 2 + direction);
     }
 
@@ -29,87 +29,72 @@ public class App {
     static boolean canBeOpenedWithoutMirror;
 
     public static void solve(){
-        int baseRow = 0, baseCol = 0;
-        byte baseDirection = 3; // start with right direction
+        long currRow = 0, currCol = 0;
+        byte currDirection = 3; // start with `right` direction
+        Set<Long> originalHorizontalVisits = new TreeSet<>();
+        Set<Long> originalVerticalVisits = new TreeSet<>();
 
         // first, let's see if we can reach the end without any mirrors
         while(true){
-            if(baseRow == rows - 1 && baseCol == cols){ // success
+            if(currRow == rows - 1 && currCol == cols){ // success
                 canBeOpenedWithoutMirror = true;
                 break;
             }
-            if(baseRow < 0 || baseRow >= rows || baseCol < 0 || baseCol >= cols){ // out of bounds
+            if(currRow < 0 || currRow >= rows || currCol < 0 || currCol >= cols){ // out of bounds
                 break;
             }
-            long posLexico = baseRow * cols + baseCol;
+            long posLexico = currRow * cols + currCol;
             Byte mirrorOnCell = mirrors.get(posLexico);
             if(mirrorOnCell != null) { // there is mirror on the base cell. we should apply the base mirror's reflection
-                baseDirection = mirrorReflection(baseDirection, mirrorOnCell);
+                currDirection = mirrorReflection(currDirection, mirrorOnCell);
+            } else {
+                if(currDirection % 2 == 0){ // we are vertical
+                    originalVerticalVisits.add(posLexico);
+                } else { // we are horizontal
+                    originalHorizontalVisits.add(posLexico);
+                }
             }
-            baseRow = moveRow(baseRow, baseDirection);
-            baseCol = moveColumn(baseCol, baseDirection);
+            currRow = moveRow(currRow, currDirection);
+            currCol = moveColumn(currCol, currDirection);
         }
 
         if(canBeOpenedWithoutMirror){
             return;
         }
 
-        // we can't reach the end without any mirrors, let's try inserting mirrors all along the way
-        baseRow = 0;
-        baseCol = 0;
-        baseDirection = 3; // start with right direction
-        Set<Long> posLexicoSoFar = new HashSet<>();
+        // we can't reach the end without any mirrors, let's try with mirrors
+        // we will traverse starting from the end to the start, and try to see if we can intersect with the original path perpendicularly
+        currRow = rows - 1;
+        currCol = cols - 1;
+        currDirection = 1; // start with `left` direction
         while(true){
-            if(baseRow < 0 || baseRow >= rows || baseCol < 0 || baseCol >= cols){ // out of bounds
+            if(currRow < 0 || currRow >= rows || currCol < 0 || currCol >= cols){ // out of bounds
                 break;
             }
-            long basePosLexico = baseRow * cols + baseCol;
-
-            Byte mirrorOnBaseCell = mirrors.get(basePosLexico);
-            if(mirrorOnBaseCell != null) { // there is a mirror on the base cell. we should apply the mirror and continue (we cannot add any mirror here)
-                baseDirection = mirrorReflection(baseDirection, mirrorOnBaseCell);
-                baseRow = moveRow(baseRow, baseDirection);
-                baseCol = moveColumn(baseCol, baseDirection);
-                posLexicoSoFar.add(basePosLexico);
-                continue;
-            }
-
-            if(!posLexicoSoFar.contains(basePosLexico)){ // this cell was not already visited in the base path, so we can insert mirrors here (otherwise, we would change the past...)
-                // valid cell, without mirror. let's try inserting mirrors
-                boolean anySuccess = false;
-                for(byte insertedMirror = 1; insertedMirror <= 2 && !anySuccess; insertedMirror++){
-                    byte currDirection = mirrorReflection(baseDirection, insertedMirror);
-                    int currRow = moveRow(baseRow, currDirection);
-                    int currCol = moveColumn(baseCol, currDirection);
-                    mirrors.put(basePosLexico, insertedMirror);
-                    while(true){
-                        if(currRow == rows - 1 && currCol == cols){ // success
-                            numberOfInsertedMirrors ++;
-                            if(basePosLexico < smallestMirrorInsertedLexicoPosition){
-                                smallestMirrorInsertedLexicoPosition = basePosLexico;
-                            }
-                            anySuccess = true;
-                            break;
+            long posLexico = currRow * cols + currCol;
+            Byte mirrorOnCell = mirrors.get(posLexico);
+            if(mirrorOnCell != null) { // there is mirror on the base cell. we should apply the base mirror's reflection
+                currDirection = mirrorReflection(currDirection, mirrorOnCell);
+            } else {
+                // check perpendicular intersection with original path
+                if(currDirection % 2 == 0){ // we are vertical
+                    if(originalHorizontalVisits.contains(posLexico)){
+                        if(posLexico < smallestMirrorInsertedLexicoPosition){
+                            smallestMirrorInsertedLexicoPosition = posLexico;
                         }
-                        if(currRow < 0 || currRow >= rows || currCol < 0 || currCol >= cols){ // out of bounds
-                            break;
+                        numberOfInsertedMirrors++;
+                    }
+                } else { // we are horizontal
+                    if(originalVerticalVisits.contains(posLexico)){
+                        if(posLexico < smallestMirrorInsertedLexicoPosition){
+                            smallestMirrorInsertedLexicoPosition = posLexico;
                         }
-                        long currPosLexico = currRow * cols + currCol;
-                        Byte mirrorOnCurrCell = mirrors.get(currPosLexico);
-                        if(mirrorOnCurrCell != null) { // there is mirror on the curr cell. we should apply the curr mirror's reflection
-                            currDirection = mirrorReflection(currDirection, mirrorOnCurrCell);
-                        }
-                        currRow = moveRow(currRow, currDirection);
-                        currCol = moveColumn(currCol, currDirection);
+                        numberOfInsertedMirrors++;
                     }
                 }
-                mirrors.remove(basePosLexico);
             }
-
-            // keep moving normally as if no mirror is inserted
-            baseRow = moveRow(baseRow, baseDirection);
-            baseCol = moveColumn(baseCol, baseDirection);
-            posLexicoSoFar.add(basePosLexico);
+            currRow = moveRow(currRow, currDirection);
+            currCol = moveColumn(currCol, currDirection);
         }
     }
 
