@@ -1,6 +1,8 @@
 package com.example.asafebet;
 
+import java.io.BufferedWriter;
 import java.io.IOException;
+import java.io.OutputStreamWriter;
 import java.util.*;
 
 public class App {
@@ -163,7 +165,7 @@ public class App {
     public static void main(String[] args) throws IOException {
         var stdin = new FastConsoleReader();
 
-        var sb = new StringBuilder(1024 * 32);
+        BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(System.out), 1024* 128);
 
         int caseCount = 0;
         while(true){
@@ -207,21 +209,19 @@ public class App {
 
             caseCount++;
 
-            sb.append("Case ").append(caseCount).append(": ");
-
             if(canBeOpenedWithoutMirror){
-                sb.append('0');
+                writer.write("Case " + caseCount + ": 0\n");
             } else if(numberOfInsertedMirrors > 0){
-                sb.append(numberOfInsertedMirrors).append(' ');
-                sb.append(smallestMirrorInsertedLexicoPosition / cols + 1).append(' ');
-                sb.append(smallestMirrorInsertedLexicoPosition % cols + 1);
+                String sb = "Case " + caseCount + ": " + numberOfInsertedMirrors + " " +
+                        (smallestMirrorInsertedLexicoPosition / cols + 1) + " " +
+                        (smallestMirrorInsertedLexicoPosition % cols + 1) + '\n';
+
+                writer.write(sb);
             } else {
-                sb.append("impossible");
+                writer.write("Case " + caseCount + ": impossible\n");
             }
 
-            sb.append('\n');
         }
-
-        System.out.print(sb);
+        writer.flush();
     }
 }
