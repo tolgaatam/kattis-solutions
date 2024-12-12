@@ -57,106 +57,75 @@ public class App {
         }
     }
 
-    public static void solve(){
-        long currRow = 0, currCol = -1L;
-        byte currDirection = 3; // start with `right` direction
-        List<FlatLine<Long, Long, Long>> originalHorizontalLines = new ArrayList<>();
-        List<FlatLine<Long, Long, Long>> originalVerticalLines = new ArrayList<>();
+    public static boolean generateLines(List<FlatLine<Long, Long, Long>> horizontalLines, List<FlatLine<Long, Long, Long>> verticalLines, long startRow, long startCol, byte startDirection){
+        long currRow = startRow, currCol = startCol;
+        byte currDirection = startDirection;
 
-        // first, let's see if we can reach the end without any mirrors
         while(true){
-            if(currDirection == 0){ // up
-                Long nextRow = mirrorsByColumn.get(currCol).lower(currRow);
-                if(nextRow == null){
-                    originalVerticalLines.add(new FlatLine<>(currCol, 0L, currRow - 1));
-                    break;
-                } else {
-                    originalVerticalLines.add(new FlatLine<>(currCol, nextRow + 1, currRow - 1));
-                    currRow = nextRow;
-                }
-            } else if (currDirection == 1) { // left
-                Long nextCol = mirrorsByRow.get(currRow).lower(currCol);
-                if(nextCol == null){
-                    originalHorizontalLines.add(new FlatLine<>(currRow, 0L, currCol - 1));
-                    break;
-                } else {
-                    originalHorizontalLines.add(new FlatLine<>(currRow, nextCol + 1, currCol - 1));
-                    currCol = nextCol;
-                }
-            } else if (currDirection == 2) { // down
-                Long nextRow = mirrorsByColumn.get(currCol).higher(currRow);
-                if(nextRow == null){
-                    originalVerticalLines.add(new FlatLine<>(currCol, currRow + 1, rows - 1));
-                    break;
-                } else {
-                    originalVerticalLines.add(new FlatLine<>(currCol, currRow + 1, nextRow - 1));
-                    currRow = nextRow;
-                }
-            } else { // right
-                Long nextCol = mirrorsByRow.get(currRow).higher(currCol);
-                if(nextCol == null){
-                    originalHorizontalLines.add(new FlatLine<>(currRow, currCol + 1, cols - 1));
-                    break;
-                } else {
-                    if(nextCol == cols){ // we reached the end without any mirrors. no other processing is needed.
-                        canBeOpenedWithoutMirror = true;
-                        return;
+            switch (currDirection){
+                case 0 -> { // up
+                    Long nextRow = mirrorsByColumn.get(currCol).lower(currRow);
+                    if(nextRow == null){
+                        verticalLines.add(new FlatLine<>(currCol, 0L, currRow - 1));
+                        return false;
+                    } else {
+                        verticalLines.add(new FlatLine<>(currCol, nextRow + 1, currRow - 1));
+                        currRow = nextRow;
                     }
-                    originalHorizontalLines.add(new FlatLine<>(currRow, currCol + 1, nextCol - 1));
-                    currCol = nextCol;
+                }
+                case 1 -> { // left
+                    Long nextCol = mirrorsByRow.get(currRow).lower(currCol);
+                    if(nextCol == null){
+                        horizontalLines.add(new FlatLine<>(currRow, 0L, currCol - 1));
+                        return false;
+                    } else {
+                        horizontalLines.add(new FlatLine<>(currRow, nextCol + 1, currCol - 1));
+                        currCol = nextCol;
+                    }
+                }
+                case 2 -> { // down
+                    Long nextRow = mirrorsByColumn.get(currCol).higher(currRow);
+                    if(nextRow == null){
+                        verticalLines.add(new FlatLine<>(currCol, currRow + 1, rows - 1));
+                        return false;
+                    } else {
+                        verticalLines.add(new FlatLine<>(currCol, currRow + 1, nextRow - 1));
+                        currRow = nextRow;
+                    }
+                }
+                default -> { // 3 - right
+                    Long nextCol = mirrorsByRow.get(currRow).higher(currCol);
+                    if(nextCol == null){
+                        horizontalLines.add(new FlatLine<>(currRow, currCol + 1, cols - 1));
+                        return false;
+                    } else {
+                        if(nextCol == cols){ // we reached the end without any mirrors. no other processing is needed.
+                            return true;
+                        }
+                        horizontalLines.add(new FlatLine<>(currRow, currCol + 1, nextCol - 1));
+                        currCol = nextCol;
+                    }
                 }
             }
+
             currDirection = mirrorReflection(currDirection, mirrors.get(currRow * cols + currCol));
+        }
+    }
+
+    public static void solve(){
+        List<FlatLine<Long, Long, Long>> originalHorizontalLines = new ArrayList<>();
+        List<FlatLine<Long, Long, Long>> originalVerticalLines = new ArrayList<>();
+        // start from top left corner to the `right` direction
+        canBeOpenedWithoutMirror = generateLines(originalHorizontalLines, originalVerticalLines, 0L, -1L, (byte) 3);
+        if(canBeOpenedWithoutMirror){
+            return;
         }
 
         // we can't reach the end without any mirrors (we would have returned from the function if we did), let's try with mirrors
         // we will traverse from the end to the start, and collect line information
-        currRow = rows - 1;
-        currCol = cols;
-        currDirection = 1; // start with `left` direction
         List<FlatLine<Long, Long, Long>> reverseHorizontalLines = new ArrayList<>();
         List<FlatLine<Long, Long, Long>> reverseVerticalLines = new ArrayList<>();
-
-        while(true){
-            if(currDirection == 0){ // up
-                Long nextRow = mirrorsByColumn.get(currCol).lower(currRow);
-                if(nextRow == null){
-                    reverseVerticalLines.add(new FlatLine<>(currCol, 0L, currRow - 1));
-                    break;
-                } else {
-                    reverseVerticalLines.add(new FlatLine<>(currCol, nextRow + 1, currRow - 1));
-                    currRow = nextRow;
-                }
-            } else if (currDirection == 1) { // left
-                Long nextCol = mirrorsByRow.get(currRow).lower(currCol);
-                if(nextCol == null){
-                    reverseHorizontalLines.add(new FlatLine<>(currRow, 0L, currCol - 1));
-                    break;
-                } else {
-                    reverseHorizontalLines.add(new FlatLine<>(currRow, nextCol + 1, currCol - 1));
-                    currCol = nextCol;
-                }
-            } else if (currDirection == 2) { // down
-                Long nextRow = mirrorsByColumn.get(currCol).higher(currRow);
-                if(nextRow == null){
-                    reverseVerticalLines.add(new FlatLine<>(currCol, currRow + 1, rows - 1));
-                    break;
-                } else {
-                    reverseVerticalLines.add(new FlatLine<>(currCol, currRow + 1, nextRow - 1));
-                    currRow = nextRow;
-                }
-            } else { // right
-                Long nextCol = mirrorsByRow.get(currRow).higher(currCol);
-                if(nextCol == null){
-                    reverseHorizontalLines.add(new FlatLine<>(currRow, currCol + 1, cols - 1));
-                    break;
-                } else {
-                    reverseHorizontalLines.add(new FlatLine<>(currRow, currCol + 1, nextCol - 1));
-                    currCol = nextCol;
-                }
-            }
-            currDirection = mirrorReflection(currDirection, mirrors.get(currRow * cols + currCol));
-        }
+        generateLines(reverseHorizontalLines, reverseVerticalLines, rows - 1, cols, (byte) 1);
 
         sweepLine(originalHorizontalLines, reverseVerticalLines);
         sweepLine(reverseHorizontalLines, originalVerticalLines);
