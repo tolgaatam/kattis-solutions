@@ -131,6 +131,23 @@ public class App {
         sweepLine(reverseHorizontalLines, originalVerticalLines);
     }
 
+    private static void addMirror(long row, long col, byte mirrorType){
+        mirrors.put(row * cols + col, mirrorType);
+        TreeSet<Long> ms;
+
+        if((ms = mirrorsByRow.get(row)) == null){
+            ms = new TreeSet<>();
+            mirrorsByRow.put(row, ms);
+        }
+        ms.add(col);
+
+        if((ms = mirrorsByColumn.get(col)) == null){
+            ms = new TreeSet<>();
+            mirrorsByColumn.put(col, ms);
+        }
+        ms.add(row);
+    }
+
     public static void main(String[] args) throws IOException {
         var stdin = new FastConsoleReader();
 
@@ -138,6 +155,7 @@ public class App {
 
         int caseCount = 0;
         while(true){
+            caseCount++;
             try{
                 rows = stdin.nextInt();
                 cols = stdin.nextInt();
@@ -155,28 +173,27 @@ public class App {
                 for(int i = 0; i < twoMirrorCount; i++){
                     row = stdin.nextLong()-1;
                     col = stdin.nextLong()-1;
-                    mirrors.put(row * cols + col, (byte) 2);
-                    mirrorsByRow.computeIfAbsent(row, k -> new TreeSet<>()).add(col);
-                    mirrorsByColumn.computeIfAbsent(col, k -> new TreeSet<>()).add(row);
+                    addMirror(row, col, (byte) 2);
                 }
                 for(int i = 0; i < oneMirrorCount; i++){
                     row = stdin.nextLong()-1;
                     col = stdin.nextLong()-1;
-                    mirrors.put(row * cols + col, (byte) 1);
-                    mirrorsByRow.computeIfAbsent(row, k -> new TreeSet<>()).add(col);
-                    mirrorsByColumn.computeIfAbsent(col, k -> new TreeSet<>()).add(row);
+                    addMirror(row, col, (byte) 1);
                 }
             } catch (NullPointerException e){ // means that the input stream is closed
                 break;
             }
 
             // add imaginary mirrors to the start and success points, to be able to stop properly
-            mirrorsByRow.computeIfAbsent(rows - 1, k -> new TreeSet<>()).add(cols);
-            mirrorsByRow.computeIfAbsent(0L, k -> new TreeSet<>()).add(-1L);
+            addMirror(rows - 1, cols, (byte) 2);
+            addMirror(0L, -1L, (byte) 2);
 
-            solve();
-
-            caseCount++;
+            Byte m1, m2;
+            // checking if entry and exit point does not have a mirror that blocks the path.
+            // if so, we could directly say that the safe is impossible to open
+            if(!((m1 = mirrors.get(0L)) != null && m1 == 2) && !((m2 = mirrors.get(rows * cols - 1)) != null && m2 == 2)) {
+                solve();
+            }
 
             if(canBeOpenedWithoutMirror){
                 writer.write("Case " + caseCount + ": 0\n");
