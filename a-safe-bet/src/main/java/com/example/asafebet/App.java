@@ -25,7 +25,7 @@ public class App {
         List<Event> events = new ArrayList<>();
         for(var horizontalLine : horizontalLines){
             events.add(new Event(horizontalLine.start(), horizontalLine.main(), horizontalLine.main(), (byte) 1));
-            events.add(new Event(horizontalLine.end()+1, horizontalLine.main(), horizontalLine.main(), (byte) -1));
+            events.add(new Event(horizontalLine.end(), horizontalLine.main(), horizontalLine.main(), (byte) -1));
         }
         for(var verticalLine : verticalLines){
             events.add(new Event(verticalLine.main(), verticalLine.start(), verticalLine.end(), (byte) 0));
@@ -69,7 +69,9 @@ public class App {
                         verticalLines.add(new FlatLine<>(currCol, 0L, currRow - 1));
                         return false;
                     } else {
-                        verticalLines.add(new FlatLine<>(currCol, nextRow + 1, currRow - 1));
+                        if(nextRow + 1 <= currRow - 1) {
+                            verticalLines.add(new FlatLine<>(currCol, nextRow + 1, currRow - 1));
+                        }
                         currRow = nextRow;
                     }
                 }
@@ -79,7 +81,9 @@ public class App {
                         horizontalLines.add(new FlatLine<>(currRow, 0L, currCol - 1));
                         return false;
                     } else {
-                        horizontalLines.add(new FlatLine<>(currRow, nextCol + 1, currCol - 1));
+                        if(nextCol + 1 <= currCol - 1){
+                            horizontalLines.add(new FlatLine<>(currRow, nextCol + 1, currCol - 1));
+                        }
                         currCol = nextCol;
                     }
                 }
@@ -89,7 +93,9 @@ public class App {
                         verticalLines.add(new FlatLine<>(currCol, currRow + 1, rows - 1));
                         return false;
                     } else {
-                        verticalLines.add(new FlatLine<>(currCol, currRow + 1, nextRow - 1));
+                        if(currRow + 1 <= nextRow - 1) {
+                            verticalLines.add(new FlatLine<>(currCol, currRow + 1, nextRow - 1));
+                        }
                         currRow = nextRow;
                     }
                 }
@@ -102,7 +108,9 @@ public class App {
                         if(nextCol == cols){ // we reached the end without any mirrors. no other processing is needed.
                             return true;
                         }
-                        horizontalLines.add(new FlatLine<>(currRow, currCol + 1, nextCol - 1));
+                        if(currCol + 1 <= nextCol - 1) {
+                            horizontalLines.add(new FlatLine<>(currRow, currCol + 1, nextCol - 1));
+                        }
                         currCol = nextCol;
                     }
                 }
