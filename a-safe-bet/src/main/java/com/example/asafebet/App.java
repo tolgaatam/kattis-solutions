@@ -22,6 +22,7 @@ public class App {
     static boolean canBeOpenedWithoutMirror;
 
     public static void sweepLine(List<FlatLine<Long, Long, Long>> horizontalLines, List<FlatLine<Long, Long, Long>> verticalLines){
+        // Build events: horizontal add(+1)/remove(-1) and vertical queries(0)
         List<Event> events = new ArrayList<>();
         for(var horizontalLine : horizontalLines){
             events.add(new Event(horizontalLine.start(), horizontalLine.main(), horizontalLine.main(), (byte) 1));
@@ -38,22 +39,96 @@ public class App {
             return (int) (a.col() - b.col());
         });
 
-        var activeRows = new TreeSet<Long>();
+        // Coordinate compress the rows that can be active (horizontal line mains)
+        var rowsSet = new TreeSet<Long>();
+        for (var hl : horizontalLines) rowsSet.add(hl.main());
 
-        // Process all events
+        if (rowsSet.isEmpty()) return; // nothing to do
+
+        var rowsList = new ArrayList<Long>(rowsSet);
+        var indexMap = new HashMap<Long, Integer>();
+        for (int i = 0; i < rowsList.size(); i++) indexMap.put(rowsList.get(i), i + 1); // 1-based for BIT
+
+        Fenwick bit = new Fenwick(rowsList.size());
+
+        // Process events in sweep-line order, using BIT to maintain active rows
         for (Event event : events) {
             switch (event.type()) {
-                case 1 -> activeRows.add(event.row1());
-                case -1 -> activeRows.remove(event.row1());
-                case 0 -> {
-                    var intersectingRows = activeRows.subSet(event.row1(), event.row2() + 1);
-                    numberOfInsertedMirrors += intersectingRows.size();
-                    try{
-                        var minimumIntersectingRow = intersectingRows.first();
-                        smallestMirrorInsertedLexicoPosition = Math.min(smallestMirrorInsertedLexicoPosition, minimumIntersectingRow * cols + event.col());
-                    } catch (NoSuchElementException ignored){}
+                case 1 -> { // add row
+                    Integer idx = indexMap.get(event.row1());
+                    if (idx != null) bit.add(idx, 1);
+                }
+                case -1 -> { // remove row
+                    Integer idx = indexMap.get(event.row1());
+                    if (idx != null) bit.add(idx, -1);
+                }
+                case 0 -> { // vertical query over [row1, row2]
+                    // find compressed index range [l, r] covering rows in [row1, row2]
+                    int l = lowerBound(rowsList, event.row1());
+                    int r = upperBound(rowsList, event.row2()) - 1;
+                    if (l <= r) {
+                        long sum = bit.sum(r + 1) - bit.sum(l);
+                        numberOfInsertedMirrors += sum;
+                        if (sum > 0) {
+                            long prefBefore = bit.sum(l);
+                            int pos = bit.findFirstGreater(prefBefore);
+                            if (pos >= 1 && pos <= r + 1) {
+                                long rowVal = rowsList.get(pos - 1);
+                                smallestMirrorInsertedLexicoPosition = Math.min(smallestMirrorInsertedLexicoPosition, rowVal * cols + event.col());
+                            }
+                        }
+                    }
                 }
             }
+        }
+    }
+
+    // lowerBound: first index in sorted list >= value (0-based)
+    private static int lowerBound(List<Long> list, long value){
+        int l = 0, r = list.size();
+        while(l < r){
+            int m = (l + r) >>> 1;
+            if(list.get(m) >= value) r = m; else l = m + 1;
+        }
+        return l;
+    }
+
+    // upperBound: first index in sorted list > value (0-based)
+    private static int upperBound(List<Long> list, long value){
+        int l = 0, r = list.size();
+        while(l < r){
+            int m = (l + r) >>> 1;
+            if(list.get(m) > value) r = m; else l = m + 1;
+        }
+        return l;
+    }
+
+    // Fenwick tree (1-based)
+    static class Fenwick{
+        private final long[] bit;
+        private final int n;
+        Fenwick(int n){ this.n = n; bit = new long[n+1]; }
+        void add(int idx, long delta){
+            for(int i = idx; i <= n; i += i & -i) bit[i] += delta;
+        }
+        long sum(int idx){ // prefix sum up to idx (1-based). if idx==0 returns 0
+            long res = 0;
+            for(int i = idx; i > 0; i -= i & -i) res += bit[i];
+            return res;
+        }
+        // find smallest index such that prefix sum > target. Returns 1-based index, or n+1 if none
+        int findFirstGreater(long target){
+            int idx = 0;
+            int bitMask = Integer.highestOneBit(n);
+            long sum = 0;
+            for(int k = bitMask; k != 0; k >>= 1){
+                int next = idx + k;
+                if(next <= n && sum + bit[next] <= target){
+                    idx = next;
+                    sum += bit[next];
+                }
+            }
+            return idx + 1;
         }
     }
 
