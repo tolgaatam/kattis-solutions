@@ -1,34 +1,54 @@
 package com.example.asafebet;
 
-import java.io.BufferedReader;
-import java.io.InputStreamReader;
 import java.io.IOException;
-import java.util.StringTokenizer;
+import java.io.InputStream;
 
 public class FastConsoleReader {
-    private final BufferedReader reader;
-    private StringTokenizer tokenizer;
+    private final InputStream in;
+    private final byte[] buffer = new byte[1 << 16];
+    private int ptr = 0, len = 0;
 
     public FastConsoleReader() {
-        reader = new BufferedReader(new InputStreamReader(System.in), 4096*4);
+        this.in = System.in;
     }
 
-    String next() throws IOException {
-        while (tokenizer == null || !tokenizer.hasMoreTokens()) {
-            tokenizer = new StringTokenizer(reader.readLine());
+    private int read() throws IOException {
+        if (ptr >= len) {
+            len = in.read(buffer);
+            ptr = 0;
+            if (len <= 0) return -1;
         }
-        return tokenizer.nextToken();
+        return buffer[ptr++];
     }
 
-    int nextInt() throws IOException {
-        return Integer.parseInt(next());
+    public long nextLong() throws IOException {
+        int c = read();
+        while (c <= ' ') {
+            if (c == -1) throw new IOException("EOF");
+            c = read();
+        }
+        boolean neg = false;
+        if (c == '-') { neg = true; c = read(); }
+        long val = 0;
+        while (c > ' ') {
+            val = val * 10 + (c - '0');
+            c = read();
+        }
+        return neg ? -val : val;
     }
 
-    long nextLong() throws IOException {
-        return Long.parseLong(next());
+    public int nextInt() throws IOException {
+        return (int) nextLong();
     }
 
-    String nextLine() throws IOException {
-        return reader.readLine();
+    public String nextLine() throws IOException {
+        StringBuilder sb = new StringBuilder();
+        int c = read();
+        while (c != -1 && c != '\n') {
+            sb.append((char) c);
+            c = read();
+        }
+        if (c == -1 && sb.length() == 0) return null;
+        return sb.toString();
     }
 }

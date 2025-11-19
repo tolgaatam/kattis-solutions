@@ -21,7 +21,7 @@ public class App {
     static long numberOfInsertedMirrors;
     static boolean canBeOpenedWithoutMirror;
 
-    public static void sweepLine(List<FlatLine<Long, Long, Long>> horizontalLines, List<FlatLine<Long, Long, Long>> verticalLines){
+    public static void sweepLine(List<FlatLine> horizontalLines, List<FlatLine> verticalLines){
         // Build events: horizontal add(+1)/remove(-1) and vertical queries(0)
         List<Event> events = new ArrayList<>();
         for(var horizontalLine : horizontalLines){
@@ -36,7 +36,7 @@ public class App {
             if (a.col() == b.col()) {
                 return b.type() - a.type();
             }
-            return (int) (a.col() - b.col());
+            return Long.compare(a.col(), b.col());
         });
 
         // Coordinate compress the rows that can be active (horizontal line mains)
@@ -132,7 +132,7 @@ public class App {
         }
     }
 
-    public static boolean generateLines(List<FlatLine<Long, Long, Long>> horizontalLines, List<FlatLine<Long, Long, Long>> verticalLines, long startRow, long startCol, byte startDirection){
+    public static boolean generateLines(List<FlatLine> horizontalLines, List<FlatLine> verticalLines, long startRow, long startCol, byte startDirection){
         long currRow = startRow, currCol = startCol;
         byte currDirection = startDirection;
 
@@ -141,11 +141,11 @@ public class App {
                 case 0 -> { // up
                     Long nextRow = mirrorsByColumn.get(currCol).lower(currRow);
                     if(nextRow == null){
-                        verticalLines.add(new FlatLine<>(currCol, 0L, currRow - 1));
+                        verticalLines.add(new FlatLine(currCol, 0L, currRow - 1));
                         return false;
                     } else {
                         if(nextRow + 1 <= currRow - 1) {
-                            verticalLines.add(new FlatLine<>(currCol, nextRow + 1, currRow - 1));
+                            verticalLines.add(new FlatLine(currCol, nextRow + 1, currRow - 1));
                         }
                         currRow = nextRow;
                     }
@@ -153,11 +153,11 @@ public class App {
                 case 1 -> { // left
                     Long nextCol = mirrorsByRow.get(currRow).lower(currCol);
                     if(nextCol == null){
-                        horizontalLines.add(new FlatLine<>(currRow, 0L, currCol - 1));
+                        horizontalLines.add(new FlatLine(currRow, 0L, currCol - 1));
                         return false;
                     } else {
                         if(nextCol + 1 <= currCol - 1){
-                            horizontalLines.add(new FlatLine<>(currRow, nextCol + 1, currCol - 1));
+                            horizontalLines.add(new FlatLine(currRow, nextCol + 1, currCol - 1));
                         }
                         currCol = nextCol;
                     }
@@ -165,11 +165,11 @@ public class App {
                 case 2 -> { // down
                     Long nextRow = mirrorsByColumn.get(currCol).higher(currRow);
                     if(nextRow == null){
-                        verticalLines.add(new FlatLine<>(currCol, currRow + 1, rows - 1));
+                        verticalLines.add(new FlatLine(currCol, currRow + 1, rows - 1));
                         return false;
                     } else {
                         if(currRow + 1 <= nextRow - 1) {
-                            verticalLines.add(new FlatLine<>(currCol, currRow + 1, nextRow - 1));
+                            verticalLines.add(new FlatLine(currCol, currRow + 1, nextRow - 1));
                         }
                         currRow = nextRow;
                     }
@@ -177,14 +177,14 @@ public class App {
                 default -> { // 3 - right
                     Long nextCol = mirrorsByRow.get(currRow).higher(currCol);
                     if(nextCol == null){
-                        horizontalLines.add(new FlatLine<>(currRow, currCol + 1, cols - 1));
+                        horizontalLines.add(new FlatLine(currRow, currCol + 1, cols - 1));
                         return false;
                     } else {
                         if(nextCol == cols){ // we reached the end without any mirrors. no other processing is needed.
                             return true;
                         }
                         if(currCol + 1 <= nextCol - 1) {
-                            horizontalLines.add(new FlatLine<>(currRow, currCol + 1, nextCol - 1));
+                            horizontalLines.add(new FlatLine(currRow, currCol + 1, nextCol - 1));
                         }
                         currCol = nextCol;
                     }
@@ -196,8 +196,8 @@ public class App {
     }
 
     public static void solve(){
-        List<FlatLine<Long, Long, Long>> originalHorizontalLines = new ArrayList<>();
-        List<FlatLine<Long, Long, Long>> originalVerticalLines = new ArrayList<>();
+        List<FlatLine> originalHorizontalLines = new ArrayList<>();
+        List<FlatLine> originalVerticalLines = new ArrayList<>();
         // start from top left corner to the `right` direction
         canBeOpenedWithoutMirror = generateLines(originalHorizontalLines, originalVerticalLines, 0L, -1L, (byte) 3);
         if(canBeOpenedWithoutMirror){
@@ -206,8 +206,8 @@ public class App {
 
         // we can't reach the end without any mirrors (we would have returned from the function if we did), let's try with mirrors
         // we will traverse from the end to the start, and collect line information
-        List<FlatLine<Long, Long, Long>> reverseHorizontalLines = new ArrayList<>();
-        List<FlatLine<Long, Long, Long>> reverseVerticalLines = new ArrayList<>();
+        List<FlatLine> reverseHorizontalLines = new ArrayList<>();
+        List<FlatLine> reverseVerticalLines = new ArrayList<>();
         generateLines(reverseHorizontalLines, reverseVerticalLines, rows - 1, cols, (byte) 1);
 
         sweepLine(originalHorizontalLines, reverseVerticalLines);
@@ -263,7 +263,7 @@ public class App {
                     col = stdin.nextLong()-1;
                     addMirror(row, col, (byte) 1);
                 }
-            } catch (NullPointerException e){ // means that the input stream is closed
+            } catch (IOException e){ // input stream closed or EOF
                 break;
             }
 
