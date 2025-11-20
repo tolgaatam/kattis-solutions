@@ -18,6 +18,8 @@ func len2(a Point) float64          { return dot(a, a) }
 func length(a Point) float64        { return math.Sqrt(len2(a)) }
 func perp(a Point) Point            { return Point{-a.y, a.x} }
 
+var epsilon = 1e-9
+
 func NewStdinIntegerReaderFn() func() (int, error) {
 	// Fast streaming integer scanner using bufio.Reader. This avoids reading
 	// the whole stdin into memory and is fast enough. `nextInt` returns the next signed integer.
@@ -48,6 +50,18 @@ func NewStdinIntegerReaderFn() func() (int, error) {
 	}
 }
 
+// Check polygon convexity (allow collinear) assuming A - Pnew - B are consecutive points in CCW order
+func isConvexCCW(A, Pnew, B Point) bool {
+	v1 := Pnew.sub(A)
+	v2 := B.sub(Pnew)
+	return cross(v1, v2) >= -epsilon
+}
+
+// angle at center between v1 and v2 should be >= 90 degrees -> dot <= 0
+func isAngleAtLeast90(v1, v2 Point) bool {
+	return dot(v1, v2) <= 1e-9
+}
+
 func main() {
 	nextInt := NewStdinIntegerReaderFn()
 
@@ -60,48 +74,14 @@ func main() {
 	}
 
 	maxPerimeterIncrease := 0.0
-	epsilon := 1e-9
-
-	// helper funcs
-
-	// Check polygon convexity (allow collinear) for CCW order after replacing index i with pNew
-	isConvexWithReplacement := func(points []Point, i int, pNew Point) bool {
-		n := len(points)
-		np := make([]Point, n)
-		copy(np, points)
-		np[i] = pNew
-		for j := 0; j < n; j++ {
-			prev := np[(j-1+n)%n]
-			cur := np[j]
-			next := np[(j+1)%n]
-			if cross(cur.sub(prev), next.sub(cur)) < -1e-9 { // allow small negative due to precision
-				return false
-			}
-		}
-		return true
-	}
-
-	// angle at center between v1 and v2 should be >= 90 degrees -> dot <= 0
-	isAngleAtLeast90 := func(v1, v2 Point) bool {
-		return dot(v1, v2) <= 1e-9
-	}
-
-	// compute original perimeter
-	origPerim := 0.0
-	for i := 0; i < numberOfPoints; i++ {
-		a := points[i]
-		b := points[(i+1)%numberOfPoints]
-		origPerim += length(b.sub(a))
-	}
 
 	// iterate each point as candidate to replace
 	for i := 0; i < numberOfPoints; i++ {
-		n := numberOfPoints
-		A := points[(i-1+n)%n]
-		prevA := points[(i-2+n)%n]
+		A := points[(i-1+numberOfPoints)%numberOfPoints]
+		prevA := points[(i-2+numberOfPoints)%numberOfPoints]
 		P := points[i]
-		B := points[(i+1)%n]
-		nextB := points[(i+2)%n]
+		B := points[(i+1)%numberOfPoints]
+		nextB := points[(i+2)%numberOfPoints]
 
 		// circle with diameter AB
 		center := A.add(B).mul(0.5)
@@ -110,7 +90,7 @@ func main() {
 			continue
 		}
 
-		candidates := make([]Point, 0, 10)
+		candidates := make([]Point, 0, 7)
 
 		// two points on perpendicular bisector (endpoints of perpendicular diameter)
 		abDir := B.sub(A)
@@ -133,7 +113,7 @@ func main() {
 			bcoef := 2 * dot(u, o)
 			cc := dot(o, o) - r*r
 			dscr := bcoef*bcoef - 4*cc
-			if dscr >= -1e-12 {
+			if dscr >= -epsilon {
 				if dscr < 0 {
 					dscr = 0
 				}
@@ -144,7 +124,7 @@ func main() {
 			}
 		}
 
-		// intersection of circle with line through B perpendicular to B-nextB (i.e., nextB-B)
+		// intersection of circle with line through B perpendicular to B-nextB
 		vB := nextB.sub(B)
 		dB := perp(vB)
 		if length(dB) > epsilon {
@@ -153,7 +133,7 @@ func main() {
 			bcoef := 2 * dot(u, o)
 			cc := dot(o, o) - r*r
 			dscr := bcoef*bcoef - 4*cc
-			if dscr >= -1e-12 {
+			if dscr >= -epsilon {
 				if dscr < 0 {
 					dscr = 0
 				}
@@ -164,41 +144,16 @@ func main() {
 			}
 		}
 
-		// intersection of circle with the continuation of the prevA-A line (line through A and prevA)
-		vLineA := A.sub(prevA)
-		if length(vLineA) > epsilon {
-			u := vLineA.mul(1.0 / length(vLineA))
-			o := A.sub(center)
-			bcoef := 2 * dot(u, o)
-			cc := dot(o, o) - r*r
-			dscr := bcoef*bcoef - 4*cc
-			if dscr >= -1e-12 {
-				if dscr < 0 {
-					dscr = 0
-				}
-				t1 := (-bcoef + math.Sqrt(dscr)) / 2.0
-				t2 := (-bcoef - math.Sqrt(dscr)) / 2.0
-				candidates = append(candidates, A.add(u.mul(t1)))
-				candidates = append(candidates, A.add(u.mul(t2)))
-			}
-		}
-
-		// intersection of circle with the continuation of the B-nextB line (line through B and nextB)
-		vLineB := nextB.sub(B)
-		if length(vLineB) > epsilon {
-			u := vLineB.mul(1.0 / length(vLineB))
-			o := B.sub(center)
-			bcoef := 2 * dot(u, o)
-			cc := dot(o, o) - r*r
-			dscr := bcoef*bcoef - 4*cc
-			if dscr >= -1e-12 {
-				if dscr < 0 {
-					dscr = 0
-				}
-				t1 := (-bcoef + math.Sqrt(dscr)) / 2.0
-				t2 := (-bcoef - math.Sqrt(dscr)) / 2.0
-				candidates = append(candidates, B.add(u.mul(t1)))
-				candidates = append(candidates, B.add(u.mul(t2)))
+		// intersection of line through B perpendicular to B-nextB with line through A perpendicular to prevA-A
+		if length(dA) > epsilon && length(dB) > epsilon {
+			denom := cross(dA, dB)
+			if math.Abs(denom) > epsilon {
+				// lines are not parallel
+				o := A.sub(B)
+				tA := cross(o, dB) / denom
+				// tB := cross(o, dA) / denom
+				intersectP := A.add(dA.mul(tA))
+				candidates = append(candidates, intersectP)
 			}
 		}
 
@@ -223,7 +178,7 @@ func main() {
 			}
 
 			// polygon convexity
-			if !isConvexWithReplacement(points, i, cand) {
+			if !isConvexCCW(A, cand, B) {
 				continue
 			}
 
@@ -236,6 +191,6 @@ func main() {
 		}
 	}
 
-	fmt.Printf("%.12f\n", maxPerimeterIncrease)
+	fmt.Printf("%.12f\n")
 
 }
