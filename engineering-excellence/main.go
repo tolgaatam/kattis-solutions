@@ -18,7 +18,7 @@ func len2(a Point) float64          { return dot(a, a) }
 func length(a Point) float64        { return math.Sqrt(len2(a)) }
 func perp(a Point) Point            { return Point{-a.y, a.x} }
 
-var epsilon = 1e-9
+var epsilon = 1e-4
 var candidates = make([]Point, 0, 64)
 
 func addIntersectionOfTwoLines(P1, D1, P2, D2 Point) {
@@ -90,6 +90,33 @@ func isConvexCCW(P1, P2, P3 Point) bool {
 // angle at center between v1 and v2 should be >= 90 degrees -> dot <= 0
 func isAngleAtLeast90(v1, v2 Point) bool {
 	return dot(v1, v2) <= epsilon
+}
+
+func validateCandidate(prevA, A, candidate, B, nextB Point) bool {
+	// skip if candidate is extremely close to existing adjacent vertices
+	if length(candidate.sub(A)) < epsilon || length(candidate.sub(B)) < epsilon {
+		return false
+	}
+
+	// angle prevA-A-cand at A should be >= 90
+	if !isAngleAtLeast90(prevA.sub(A), candidate.sub(A)) {
+		return false
+	}
+	// angle cand-B-nextB at B should be >= 90
+	if !isAngleAtLeast90(candidate.sub(B), nextB.sub(B)) {
+		return false
+	}
+	// angle at new point P' should be >= 90 (A-P'-B)
+	if !isAngleAtLeast90(A.sub(candidate), B.sub(candidate)) {
+		return false
+	}
+
+	// polygon convexity
+	if !isConvexCCW(A, candidate, B) || !isConvexCCW(prevA, A, candidate) || !isConvexCCW(candidate, B, nextB) {
+		return false
+	}
+
+	return true
 }
 
 func main() {
@@ -168,31 +195,12 @@ func main() {
 		oldDist := length(P.sub(A)) + length(P.sub(B))
 
 		// validate candidates
-		for _, cand := range candidates {
-			// skip if candidate is extremely close to existing adjacent vertices
-			if length(cand.sub(A)) < epsilon || length(cand.sub(B)) < epsilon {
+		for _, candidate := range candidates {
+			if !validateCandidate(prevA, A, candidate, B, nextB) {
 				continue
 			}
 
-			// angle prevA-A-cand at A should be >= 90
-			if !isAngleAtLeast90(prevA.sub(A), cand.sub(A)) {
-				continue
-			}
-			// angle cand-B-nextB at B should be >= 90
-			if !isAngleAtLeast90(cand.sub(B), nextB.sub(B)) {
-				continue
-			}
-			// angle at new point P' should be >= 90 (A-P'-B)
-			if !isAngleAtLeast90(A.sub(cand), B.sub(cand)) {
-				continue
-			}
-
-			// polygon convexity
-			if !isConvexCCW(A, cand, B) || !isConvexCCW(prevA, A, cand) || !isConvexCCW(cand, B, nextB) {
-				continue
-			}
-
-			newDist := length(cand.sub(A)) + length(cand.sub(B))
+			newDist := length(candidate.sub(A)) + length(candidate.sub(B))
 			inc := newDist - oldDist
 			if inc > maxPerimeterIncrease+epsilon {
 				maxPerimeterIncrease = inc

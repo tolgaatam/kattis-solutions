@@ -1,1 +1,1 @@
-in the making
+This was a challenging task, indeed. I got the best execution time (0.03s) with another implementation in C++. Achieving the same speed in Go made me happy.
