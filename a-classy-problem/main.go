@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"fmt"
 	"os"
+	"slices"
 	"strconv"
 	"strings"
 )
@@ -76,19 +77,14 @@ func main() {
 			thisCasePeople[personIdx].Point += MissingMiddleAddingList[numberOfClasses] // add 1's to the missing digits
 		}
 
-		QuickSort(thisCasePeople, func(a, b Person) bool {
-			return a.Point > b.Point ||
-				(a.Point == b.Point && a.Name < b.Name)
-		})
-
-		/*slices.SortFunc(thisCasePeople, func(a, b Person) int {
+		slices.SortFunc(thisCasePeople, func(a, b Person) int {
 			if a.Point > b.Point ||
 				(a.Point == b.Point && a.Name < b.Name) {
 				return -1
 			} else {
 				return 1
 			}
-		})*/
+		})
 
 		for personIdx := 0; personIdx < numberOfPeople; personIdx++ {
 			outputBuilder.WriteString(thisCasePeople[personIdx].Name)
