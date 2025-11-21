@@ -123,6 +123,8 @@ func main() {
 	nextInt := NewStdinIntegerReaderFn()
 
 	numberOfPoints, _ := nextInt()
+	// reading every point into memory is not necessary, I could stream process them.
+	// but the max number of points is 10^5 which is quite manageable in memory. so I did not optimize for that.
 	points := make([]Point, numberOfPoints)
 	for i := 0; i < numberOfPoints; i++ {
 		x, _ := nextInt()
@@ -143,26 +145,28 @@ func main() {
 		// circle with diameter AB
 		center := A.add(B).mul(0.5)
 		radius := length(B.sub(A)) * 0.5
-		if radius <= epsilon { // TODO: A != B is guaranteed in the problem. no need for this check
-			continue
-		}
 
 		candidates = candidates[:0] // reset candidate slice
 
-		// two points on perpendicular bisector (endpoints of perpendicular diameter)
+		oldDist := length(P.sub(A)) + length(P.sub(B))
+
+		// endpoint of perpendicular diameter (best point)
 		abDir := B.sub(A)
 		perpDir := perp(abDir)
 		pl := length(perpDir)
 		if pl > epsilon {
 			u := perpDir.mul(1.0 / pl)
-			// TODO: only one of these points is needed. remove unnecessary one for efficiency later
-			candidates = append(candidates, center.add(u.mul(radius)))
-			candidates = append(candidates, center.add(u.mul(-radius)))
+			endpoint := center.add(u.mul(-radius))
+			// this is the point maximizing the sum of distances. if this is valid, other candidates need not be considered
+			if validateCandidate(prevA, A, endpoint, B, nextB) {
+				newDist := length(endpoint.sub(A)) + length(endpoint.sub(B))
+				inc := newDist - oldDist
+				if inc > maxPerimeterIncrease+epsilon {
+					maxPerimeterIncrease = inc
+				}
+				continue
+			}
 		}
-
-		/* TODO: we can check the validity of the perpendicular bisector here, and if it passes the angle and convexity tests,
-		   we can directly compute the perimeter increase and avoid adding unnecessary candidates
-		*/
 
 		// intersection of the circle with perpA line (through A perpendicular to prevA-A)
 		vA := prevA.sub(A)
@@ -191,8 +195,6 @@ func main() {
 
 		// intersection of perpB line and contA line
 		addIntersectionOfTwoLines(B, vPerpB, A, vA)
-
-		oldDist := length(P.sub(A)) + length(P.sub(B))
 
 		// validate candidates
 		for _, candidate := range candidates {
