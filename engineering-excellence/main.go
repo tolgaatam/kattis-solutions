@@ -19,6 +19,36 @@ func length(a Point) float64        { return math.Sqrt(len2(a)) }
 func perp(a Point) Point            { return Point{-a.y, a.x} }
 
 var epsilon = 1e-9
+var candidates = make([]Point, 0, 64)
+
+func addIntersectionOfTwoLines(P1, D1, P2, D2 Point) {
+	denom := cross(D1, D2)
+	if math.Abs(denom) > epsilon {
+		diff := P2.sub(P1)
+		t := cross(diff, D2) / denom
+		cand := P1.add(D1.mul(t))
+		candidates = append(candidates, cand)
+	}
+}
+
+func addIntersectionsOfLineWithCircle(P0, D, O Point, r float64) {
+	if length(D) > epsilon {
+		u := D.mul(1.0 / length(D))
+		o := P0.sub(O)
+		bcoef := 2 * dot(u, o)
+		cc := dot(o, o) - r*r
+		dscr := bcoef*bcoef - 4*cc
+		if dscr >= -epsilon {
+			if dscr < 0 {
+				dscr = 0
+			}
+			t1 := (-bcoef + math.Sqrt(dscr)) / 2.0
+			t2 := (-bcoef - math.Sqrt(dscr)) / 2.0
+			candidates = append(candidates, P0.add(u.mul(t1)))
+			candidates = append(candidates, P0.add(u.mul(t2)))
+		}
+	}
+}
 
 func NewStdinIntegerReaderFn() func() (int, error) {
 	// Fast streaming integer scanner using bufio.Reader. This avoids reading
@@ -50,16 +80,16 @@ func NewStdinIntegerReaderFn() func() (int, error) {
 	}
 }
 
-// Check polygon convexity (allow collinear) assuming A - Pnew - B are consecutive points in CCW order
-func isConvexCCW(A, Pnew, B Point) bool {
-	v1 := Pnew.sub(A)
-	v2 := B.sub(Pnew)
+// Check polygon convexity (allow collinear) assuming P1 - P2 - P3 are consecutive points in CCW order
+func isConvexCCW(P1, P2, P3 Point) bool {
+	v1 := P2.sub(P1)
+	v2 := P3.sub(P2)
 	return cross(v1, v2) >= -epsilon
 }
 
 // angle at center between v1 and v2 should be >= 90 degrees -> dot <= 0
 func isAngleAtLeast90(v1, v2 Point) bool {
-	return dot(v1, v2) <= 1e-9
+	return dot(v1, v2) <= epsilon
 }
 
 func main() {
@@ -85,12 +115,12 @@ func main() {
 
 		// circle with diameter AB
 		center := A.add(B).mul(0.5)
-		r := length(B.sub(A)) * 0.5
-		if r <= epsilon {
+		radius := length(B.sub(A)) * 0.5
+		if radius <= epsilon { // TODO: A != B is guaranteed in the problem. no need for this check
 			continue
 		}
 
-		candidates := make([]Point, 0, 7)
+		candidates = candidates[:0] // reset candidate slice
 
 		// two points on perpendicular bisector (endpoints of perpendicular diameter)
 		abDir := B.sub(A)
@@ -98,69 +128,49 @@ func main() {
 		pl := length(perpDir)
 		if pl > epsilon {
 			u := perpDir.mul(1.0 / pl)
-			candidates = append(candidates, center.add(u.mul(r)))
-			candidates = append(candidates, center.add(u.mul(-r)))
+			// TODO: only one of these points is needed. remove unnecessary one for efficiency later
+			candidates = append(candidates, center.add(u.mul(radius)))
+			candidates = append(candidates, center.add(u.mul(-radius)))
 		}
 
-		// intersection of circle with line through A perpendicular to prevA-A
+		/* TODO: we can check the validity of the perpendicular bisector here, and if it passes the angle and convexity tests,
+		   we can directly compute the perimeter increase and avoid adding unnecessary candidates
+		*/
+
+		// intersection of the circle with perpA line (through A perpendicular to prevA-A)
 		vA := prevA.sub(A)
-		dA := perp(vA)
-		if length(dA) > epsilon {
-			u := dA.mul(1.0 / length(dA))
-			// line: A + t*u
-			// solve ||A + t*u - center||^2 = r^2
-			o := A.sub(center)
-			bcoef := 2 * dot(u, o)
-			cc := dot(o, o) - r*r
-			dscr := bcoef*bcoef - 4*cc
-			if dscr >= -epsilon {
-				if dscr < 0 {
-					dscr = 0
-				}
-				t1 := (-bcoef + math.Sqrt(dscr)) / 2.0
-				t2 := (-bcoef - math.Sqrt(dscr)) / 2.0
-				candidates = append(candidates, A.add(u.mul(t1)))
-				candidates = append(candidates, A.add(u.mul(t2)))
-			}
-		}
+		vPerpA := perp(vA)
+		addIntersectionsOfLineWithCircle(A, vPerpA, center, radius)
 
-		// intersection of circle with line through B perpendicular to B-nextB
+		// intersection of the circle with perpB line (through B perpendicular to nextB-B)
 		vB := nextB.sub(B)
-		dB := perp(vB)
-		if length(dB) > epsilon {
-			u := dB.mul(1.0 / length(dB))
-			o := B.sub(center)
-			bcoef := 2 * dot(u, o)
-			cc := dot(o, o) - r*r
-			dscr := bcoef*bcoef - 4*cc
-			if dscr >= -epsilon {
-				if dscr < 0 {
-					dscr = 0
-				}
-				t1 := (-bcoef + math.Sqrt(dscr)) / 2.0
-				t2 := (-bcoef - math.Sqrt(dscr)) / 2.0
-				candidates = append(candidates, B.add(u.mul(t1)))
-				candidates = append(candidates, B.add(u.mul(t2)))
-			}
-		}
+		vPerpB := perp(vB)
+		addIntersectionsOfLineWithCircle(B, vPerpB, center, radius)
 
-		// intersection of line through B perpendicular to B-nextB with line through A perpendicular to prevA-A
-		if length(dA) > epsilon && length(dB) > epsilon {
-			denom := cross(dA, dB)
-			if math.Abs(denom) > epsilon {
-				// lines are not parallel
-				o := A.sub(B)
-				tA := cross(o, dB) / denom
-				// tB := cross(o, dA) / denom
-				intersectP := A.add(dA.mul(tA))
-				candidates = append(candidates, intersectP)
-			}
-		}
+		// intersection of perpA and perpB lines
+		addIntersectionOfTwoLines(A, vPerpA, B, vPerpB)
+
+		// intersection of circle with the contA line extending prevA-A (convexity Limit)
+		addIntersectionsOfLineWithCircle(A, vA, center, radius)
+
+		// intersection of circle with the contB line extending nextB-B (convexity Limit)
+		addIntersectionsOfLineWithCircle(B, vB, center, radius)
+
+		// intersection of the contA line and contB line
+		addIntersectionOfTwoLines(A, vA, B, vB)
+
+		// intersection of perpA line and contB line
+		addIntersectionOfTwoLines(A, vPerpA, B, vB)
+
+		// intersection of perpB line and contA line
+		addIntersectionOfTwoLines(B, vPerpB, A, vA)
+
+		oldDist := length(P.sub(A)) + length(P.sub(B))
 
 		// validate candidates
 		for _, cand := range candidates {
 			// skip if candidate is extremely close to existing adjacent vertices
-			if length(cand.sub(A)) < 1e-9 || length(cand.sub(B)) < 1e-9 {
+			if length(cand.sub(A)) < epsilon || length(cand.sub(B)) < epsilon {
 				continue
 			}
 
@@ -178,11 +188,10 @@ func main() {
 			}
 
 			// polygon convexity
-			if !isConvexCCW(A, cand, B) {
+			if !isConvexCCW(A, cand, B) || !isConvexCCW(prevA, A, cand) || !isConvexCCW(cand, B, nextB) {
 				continue
 			}
 
-			oldDist := length(P.sub(A)) + length(P.sub(B))
 			newDist := length(cand.sub(A)) + length(cand.sub(B))
 			inc := newDist - oldDist
 			if inc > maxPerimeterIncrease+epsilon {
@@ -191,6 +200,5 @@ func main() {
 		}
 	}
 
-	fmt.Printf("%.12f\n")
-
+	fmt.Printf("%.12f\n", maxPerimeterIncrease)
 }
