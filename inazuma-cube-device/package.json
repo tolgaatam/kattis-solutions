@@ -1,0 +1,19 @@
+{
+  "name": "inazuma-cube-device",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "start": "ts-node src/solution.ts",
+    "build": "tsc",
+    "test": "cat samples/1.in | ts-node src/solution.ts" 
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "@types/node": "^24.10.1",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.9.3"
+  }
+}
