@@ -1,35 +1,22 @@
 import * as fs from 'fs';
 
 // Read the entire input at once
-const inputBuffer = fs.readFileSync(0, 'utf-8');
+const inputBuffer = fs.readFileSync(0);
 let inputBufferIdx = 0;
 
-
-// Skips whitespace and reads the next meaningful token
-function readString(): string {
-    let startIdx = inputBufferIdx;
-
-    // Skip leading whitespace
-    while (inputBufferIdx < inputBuffer.length && inputBuffer.charCodeAt(inputBufferIdx) <= 32) {
-        inputBufferIdx++;
-    }
-
-    if (inputBufferIdx >= inputBuffer.length) return "";
-
-    startIdx = inputBufferIdx;
-
-    // Read until next whitespace
-    while (inputBufferIdx < inputBuffer.length && inputBuffer.charCodeAt(inputBufferIdx) > 32) {
-        inputBufferIdx++;
-    }
-
-    return inputBuffer.substring(startIdx, inputBufferIdx);
-}
-
-
-// Reads the next token as an integer
+// Note: normally we would have checks for end of input, but the problem guarantees valid input in foreseeable amounts.
 function readInt(): number {
-    return parseInt(readString(), 10);
+    let res = 0;
+
+    while (inputBuffer[inputBufferIdx] <= 32) {
+        inputBufferIdx++;
+    }
+
+    while (inputBuffer[inputBufferIdx] > 32) {
+        res = res * 10 + (inputBuffer[inputBufferIdx] - 48);
+        inputBufferIdx++;
+    }
+    return res;
 }
 
 
@@ -69,8 +56,9 @@ function solve() {
         totalStrikes += neededStrikes;
 
         // Propagate the strikes to connected components
-        for (const neighbor of adj[c]) {
-            incoming[neighbor] += neededStrikes;
+        const neighbors = adj[c];
+        for (let i = 0; i < neighbors.length; i++) {
+            incoming[neighbors[i]] += neededStrikes;
         }
     }
 
