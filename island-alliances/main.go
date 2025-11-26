@@ -126,7 +126,16 @@ func main() {
 			union(rootA, rootB)
 			outputBuilder.WriteString("APPROVE\n")
 		}
+
+		// Flush output every 15000 bytes to avoid large memory usage and optimize I/O waiting times
+		// This threshold is chosen based on empirical testing on Kattis.
+		if outputBuilder.Len() >= 15000 {
+			fmt.Print(outputBuilder.String())
+			outputBuilder.Reset()
+		}
 	}
 
-	fmt.Print(outputBuilder.String())
+	if outputBuilder.Len() > 0 {
+		fmt.Print(outputBuilder.String())
+	}
 }
