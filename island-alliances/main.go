@@ -56,22 +56,17 @@ func union(a, b int) {
 
 func NewStdinIntegerReaderFn() func() (int, error) {
 	// Fast streaming integer scanner using bufio.Reader. This avoids reading
-	// the whole stdin into memory and is fast enough. `nextInt` returns the next signed integer.
+	// the whole stdin into memory and is fast enough. `nextInt` returns the next positive integer.
 	reader := bufio.NewReaderSize(os.Stdin, 1<<16)
 	return func() (int, error) {
-		sign := 1
 		val := 0
 		// skip separators
 		c, err := reader.ReadByte()
-		for err == nil && (c == ' ' || c == '\n' || c == '\r' || c == '\t') {
+		for err == nil && (c == ' ' || c == '\n') {
 			c, err = reader.ReadByte()
 		}
 		if err != nil {
 			return 0, err
-		}
-		if c == '-' {
-			sign = -1
-			c, err = reader.ReadByte()
 		}
 		for err == nil && c >= '0' && c <= '9' {
 			val = val*10 + int(c-'0')
@@ -80,7 +75,7 @@ func NewStdinIntegerReaderFn() func() (int, error) {
 		if err == nil {
 			_ = reader.UnreadByte()
 		}
-		return val * sign, nil
+		return val, nil
 	}
 }
 
