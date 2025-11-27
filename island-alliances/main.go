@@ -15,20 +15,20 @@ var (
 
 func initialize(n int) {
 	// initializes disjoint set structures
-	parents = make([]int, n)
+	parents = make([]int, n) // all elements default to 0 (roots have parent 0)
 	sizes = make([]int, n)
 	distrustSets = make([]map[int]struct{}, n)
 
 	for i := 0; i < n; i++ {
-		parents[i] = i
 		sizes[i] = 1
 	}
 }
 
 func find(x int) int {
-	if parents[x] != x {
-		parents[x] = find(parents[x]) // path compression
+	if parents[x] == 0 {
+		return x // x is a root
 	}
+	parents[x] = find(parents[x]) // path compression
 	return parents[x]
 }
 
