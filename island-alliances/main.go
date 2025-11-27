@@ -22,7 +22,6 @@ func initialize(n int) {
 	for i := 0; i < n; i++ {
 		parents[i] = i
 		sizes[i] = 1
-		distrustSets[i] = make(map[int]struct{})
 	}
 }
 
@@ -48,8 +47,12 @@ func union(a, b int) {
 	parents[rootB] = rootA
 	sizes[rootA] += sizes[rootB]
 
-	for x := range distrustSets[rootB] {
-		distrustSets[rootA][x] = struct{}{}
+	if distrustSets[rootA] == nil {
+		distrustSets[rootA] = distrustSets[rootB]
+	} else {
+		for x := range distrustSets[rootB] {
+			distrustSets[rootA][x] = struct{}{}
+		}
 	}
 	distrustSets[rootB] = nil // help GC clear stuff
 }
@@ -93,8 +96,21 @@ func main() {
 	for i := 0; i < M; i++ {
 		a, _ := nextInt()
 		b, _ := nextInt()
-		distrustSets[a][i] = struct{}{}
-		distrustSets[b][i] = struct{}{}
+		if distrustSets[a] == nil {
+			distrustSets[a] = map[int]struct{}{
+				i: {},
+			}
+		} else {
+			distrustSets[a][i] = struct{}{}
+		}
+
+		if distrustSets[b] == nil {
+			distrustSets[b] = map[int]struct{}{
+				i: {},
+			}
+		} else {
+			distrustSets[b][i] = struct{}{}
+		}
 	}
 
 	// Process proposals
@@ -108,15 +124,17 @@ func main() {
 		// check intersection: if any distrust pair index overlaps, REFUSE
 		refuse := false
 
-		// iterate over smaller set to speed up intersection test
-		if len(distrustSets[rootA]) > len(distrustSets[rootB]) {
-			rootA, rootB = rootB, rootA
-		}
+		if len(distrustSets[rootA]) > 0 && len(distrustSets[rootB]) > 0 {
+			// iterate over smaller set to speed up intersection test
+			if len(distrustSets[rootA]) > len(distrustSets[rootB]) {
+				rootA, rootB = rootB, rootA
+			}
 
-		for x := range distrustSets[rootA] {
-			if _, exists := distrustSets[rootB][x]; exists {
-				refuse = true
-				break
+			for x := range distrustSets[rootA] {
+				if _, exists := distrustSets[rootB][x]; exists {
+					refuse = true
+					break
+				}
 			}
 		}
 
