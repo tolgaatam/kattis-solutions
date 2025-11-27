@@ -7,54 +7,54 @@ import (
 	"strings"
 )
 
-var (
-	parents      []int
-	sizes        []int
-	distrustSets []map[int]struct{}
-)
+type Node struct {
+	parent      *Node
+	size        int
+	distrustSet map[int]struct{}
+}
+
+var nodes []Node
 
 func initialize(n int) {
 	// initializes disjoint set structures
-	parents = make([]int, n) // all elements default to 0 (roots have parent 0)
-	sizes = make([]int, n)
-	distrustSets = make([]map[int]struct{}, n)
-
+	nodes = make([]Node, 0, n)
 	for i := 0; i < n; i++ {
-		sizes[i] = 1
+		nodes = append(nodes, Node{
+			parent:      nil, // roots have nil parent
+			size:        1,
+			distrustSet: make(map[int]struct{}),
+		})
 	}
 }
 
-func find(x int) int {
-	if parents[x] == 0 {
-		return x // x is a root
+func find(node *Node) *Node {
+	if node.parent == nil {
+		return node // node is a root
 	}
-	parents[x] = find(parents[x]) // path compression
-	return parents[x]
+	node.parent = find(node.parent) // path compression
+	return node.parent
 }
 
-func union(a, b int) {
-	rootA := find(a)
-	rootB := find(b)
+func union(nodeA, nodeB *Node) {
+	rootA := find(nodeA)
+	rootB := find(nodeB)
 	if rootA == rootB {
 		return
 	}
 
 	// make sure rootA is the larger set
-	if sizes[rootA] < sizes[rootB] {
+	if rootA.size < rootB.size {
 		rootA, rootB = rootB, rootA
 	}
 
-	parents[rootB] = rootA
-	sizes[rootA] += sizes[rootB]
+	rootB.parent = rootA
+	rootA.size += rootB.size
 
-	if distrustSets[rootA] == nil {
-		distrustSets[rootA] = distrustSets[rootB]
-	} else {
-		for x := range distrustSets[rootB] {
-			distrustSets[rootA][x] = struct{}{}
-		}
+	// Merge distrust sets
+	for x := range rootB.distrustSet {
+		rootA.distrustSet[x] = struct{}{}
 	}
-	distrustSets[rootB] = nil // help GC clear stuff
+	rootB.distrustSet = nil // help GC clear stuff
 }
 
 func NewStdinIntegerReaderFn() func() (int, error) {
@@ -92,25 +92,12 @@ func main() {
 
 	initialize(N + 1)
 
-	// Read distrust pairs
+	// Read distrust pairs - store distrust pair indices
 	for i := 0; i < M; i++ {
 		a, _ := nextInt()
 		b, _ := nextInt()
-		if distrustSets[a] == nil {
-			distrustSets[a] = map[int]struct{}{
-				i: {},
-			}
-		} else {
-			distrustSets[a][i] = struct{}{}
-		}
-
-		if distrustSets[b] == nil {
-			distrustSets[b] = map[int]struct{}{
-				i: {},
-			}
-		} else {
-			distrustSets[b][i] = struct{}{}
-		}
+		nodes[a].distrustSet[i] = struct{}{}
+		nodes[b].distrustSet[i] = struct{}{}
 	}
 
 	// Process proposals
@@ -118,30 +105,29 @@ func main() {
 		a, _ := nextInt()
 		b, _ := nextInt()
 
-		rootA := find(a)
-		rootB := find(b)
+		rootA := find(&nodes[a])
+		rootB := find(&nodes[b])
 
-		// check intersection: if any distrust pair index overlaps, REFUSE
+		// Check intersection: if any distrust pair index overlaps, REFUSE
 		refuse := false
 
-		if len(distrustSets[rootA]) > 0 && len(distrustSets[rootB]) > 0 {
-			// iterate over smaller set to speed up intersection test
-			if len(distrustSets[rootA]) > len(distrustSets[rootB]) {
-				rootA, rootB = rootB, rootA
-			}
+		// Iterate over smaller set to speed up intersection test
+		smallerRoot, largerRoot := rootA, rootB
+		if len(rootA.distrustSet) > len(rootB.distrustSet) {
+			smallerRoot, largerRoot = rootB, rootA
+		}
 
-			for x := range distrustSets[rootA] {
-				if _, exists := distrustSets[rootB][x]; exists {
-					refuse = true
-					break
-				}
+		for x := range smallerRoot.distrustSet {
+			if _, exists := largerRoot.distrustSet[x]; exists {
+				refuse = true
+				break
 			}
 		}
 
 		if refuse {
 			outputBuilder.WriteString("REFUSE\n")
 		} else {
-			union(rootA, rootB)
+			union(&nodes[a], &nodes[b])
 			outputBuilder.WriteString("APPROVE\n")
 		}
 
